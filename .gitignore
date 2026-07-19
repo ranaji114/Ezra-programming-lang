@@ -1,0 +1,4 @@
+/target/
+.vscode/
+vscode-extension/flux/node_modules/
+vscode-extension/flux/*.vsix

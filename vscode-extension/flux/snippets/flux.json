@@ -1,0 +1,205 @@
+{
+  "Print with say": {
+    "prefix": "say",
+    "body": ["say \"${1:Hello, Flux!}\""],
+    "description": "Print a value with a newline"
+  },
+  "Print without newline": {
+    "prefix": "write",
+    "body": ["write \"${1:Loading... }\""],
+    "description": "Print a value without a newline"
+  },
+  "Variable": {
+    "prefix": "var",
+    "body": ["${1:name} is ${2:\"Flux\"}"],
+    "description": "Create or update a variable with is"
+  },
+  "Input Text": {
+    "prefix": "input",
+    "body": [
+      "${1:name} is input \"${2:Name: }\"",
+      "say \"Hello {${1:name}}\""
+    ],
+    "description": "Read text input and print it"
+  },
+  "Input Number": {
+    "prefix": "input_number",
+    "body": [
+      "${1:age} is input_number \"${2:Age: }\"",
+      "say \"Next year: {${1:age} + 1}\""
+    ],
+    "description": "Read numeric input"
+  },
+  "Check Otherwise": {
+    "prefix": "check",
+    "body": [
+      "check if ${1:condition}",
+      "  say \"${2:yes}\"",
+      "otherwise",
+      "  say \"${3:no}\""
+    ],
+    "description": "Run one of two indented branches"
+  },
+  "Check Otherwise If": {
+    "prefix": "checkif",
+    "body": [
+      "check if ${1:score >= 90}",
+      "  say \"A\"",
+      "otherwise if ${2:score >= 75}",
+      "  say \"B\"",
+      "otherwise",
+      "  say \"Try again\""
+    ],
+    "description": "Run an if / else-if / else chain"
+  },
+  "Repeat Times": {
+    "prefix": "repeat",
+    "body": [
+      "repeat ${1:3} times",
+      "  say \"${2:tick}\""
+    ],
+    "description": "Repeat a block a fixed number of times"
+  },
+  "For Each": {
+    "prefix": "foreach",
+    "body": [
+      "${1:items} is [${2:1, 2, 3}]",
+      "for each ${3:item} in ${1:items}",
+      "  say ${3:item}"
+    ],
+    "description": "Iterate over a list"
+  },
+  "Break in Loop": {
+    "prefix": "break",
+    "body": [
+      "for each ${1:item} in ${2:items}",
+      "  check if ${1:item} is ${3:target}",
+      "    break",
+      "  say ${1:item}"
+    ],
+    "description": "Leave the nearest loop"
+  },
+  "Next in Loop": {
+    "prefix": "next",
+    "body": [
+      "for each ${1:item} in ${2:items}",
+      "  check if ${1:item} is ${3:skip_value}",
+      "    next",
+      "  say ${1:item}"
+    ],
+    "description": "Skip to the next loop iteration"
+  },
+  "Function": {
+    "prefix": "give",
+    "body": [
+      "give ${1:add}(${2:a, b})",
+      "  -> ${3:a + b}",
+      "",
+      "result is ${1:add}(${4:2, 3})",
+      "say result"
+    ],
+    "description": "Define and call a function"
+  },
+  "Return": {
+    "prefix": "return",
+    "body": ["return ${1:value}"],
+    "description": "Return from a function"
+  },
+  "List": {
+    "prefix": "list",
+    "body": [
+      "${1:items} is [${2:1, 2, 3}]",
+      "say ${1:items}[0]",
+      "say ${1:items}.length"
+    ],
+    "description": "Create and read a list"
+  },
+  "List Push": {
+    "prefix": "push",
+    "body": [
+      "${1:items} is [${2:1, 2}]",
+      "${1:items} is ${1:items}.push(${3:3})",
+      "say ${1:items}"
+    ],
+    "description": "Append to a list by creating a new list"
+  },
+  "List Take Drop": {
+    "prefix": "take",
+    "body": [
+      "${1:items} is [${2:1, 2, 3, 4}]",
+      "say ${1:items}.take(${3:2})",
+      "say ${1:items}.drop(${4:1})"
+    ],
+    "description": "Take or drop list values"
+  },
+  "Object": {
+    "prefix": "obj",
+    "body": [
+      "${1:user} is { name: \"${2:Rana}\", age: ${3:20} }",
+      "say \"{${1:user}.name} is {${1:user}.age}\""
+    ],
+    "description": "Create and read an object"
+  },
+  "Text Methods": {
+    "prefix": "textmethods",
+    "body": [
+      "${1:name} is \"${2: Flux }\"",
+      "say ${1:name}.trim()",
+      "say ${1:name}.upper()",
+      "say ${1:name}.lower()",
+      "say ${1:name}.contains(\"${3:Fl}\")"
+    ],
+    "description": "Use supported text methods"
+  },
+  "Builtins": {
+    "prefix": "builtins",
+    "body": [
+      "value is ${1:[1, 2, 3]}",
+      "say len(value)",
+      "say type_of(value)",
+      "say text(value)"
+    ],
+    "description": "Use supported built-in functions"
+  },
+  "Hello World": {
+    "prefix": "hello",
+    "body": ["say \"Hello, Flux!\""],
+    "description": "Classic hello world program"
+  },
+  "Tiny Calculator": {
+    "prefix": "calculator",
+    "body": [
+      "left is input_number \"First number: \"",
+      "right is input_number \"Second number: \"",
+      "op is input \"Operation (+ - * /): \"",
+      "",
+      "check if op is \"+\"",
+      "  say left + right",
+      "otherwise if op is \"-\"",
+      "  say left - right",
+      "otherwise if op is \"*\"",
+      "  say left * right",
+      "otherwise if op is \"/\"",
+      "  say left / right",
+      "otherwise",
+      "  say \"Unknown operation\""
+    ],
+    "description": "Small input/output calculator"
+  },
+  "Grade Example": {
+    "prefix": "grade",
+    "body": [
+      "score is input_number \"Score: \"",
+      "",
+      "check if score >= 90",
+      "  say \"A\"",
+      "otherwise if score >= 75",
+      "  say \"B\"",
+      "otherwise if score >= 50",
+      "  say \"C\"",
+      "otherwise",
+      "  say \"Try again\""
+    ],
+    "description": "Condition example with otherwise-if"
+  }
+}

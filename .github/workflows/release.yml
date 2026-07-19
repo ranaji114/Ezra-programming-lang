@@ -1,0 +1,103 @@
+name: CI and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo fmt -- --check
+      - run: cargo clippy -- -D warnings
+      - run: cargo test
+
+  package:
+    name: Package ${{ matrix.name }}
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x86_64
+            os: windows-latest
+            binary: flux.exe
+            archive: flux-windows-x86_64.zip
+            pack: powershell Compress-Archive -Path target/release/flux.exe,README.md -DestinationPath flux-windows-x86_64.zip
+          - name: linux-x86_64
+            os: ubuntu-latest
+            binary: flux
+            archive: flux-linux-x86_64.tar.gz
+            pack: tar -czf flux-linux-x86_64.tar.gz -C target/release flux -C ../.. README.md
+          - name: macos-x86_64
+            os: macos-13
+            binary: flux
+            archive: flux-macos-x86_64.tar.gz
+            pack: tar -czf flux-macos-x86_64.tar.gz -C target/release flux -C ../.. README.md
+          - name: macos-aarch64
+            os: macos-latest
+            binary: flux
+            archive: flux-macos-aarch64.tar.gz
+            pack: tar -czf flux-macos-aarch64.tar.gz -C target/release flux -C ../.. README.md
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+      - run: cargo build --release
+      - name: Package archive
+        run: ${{ matrix.pack }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive }}
+          path: ${{ matrix.archive }}
+
+  package-vscode-extension:
+    name: Package VS Code extension
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vscode-extension/flux
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: vscode-extension/flux/package-lock.json
+      - run: npm ci
+      - run: npm run package
+      - name: Rename VSIX
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          mv "flux-${VERSION}.vsix" "flux-vscode-extension-${VERSION}.vsix"
+          echo "VSIX_NAME=flux-vscode-extension-${VERSION}.vsix" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.VSIX_NAME }}
+          path: vscode-extension/flux/${{ env.VSIX_NAME }}
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - package
+      - package-vscode-extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

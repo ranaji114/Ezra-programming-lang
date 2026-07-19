@@ -1,0 +1,178 @@
+{
+  "name": "flux",
+  "displayName": "Flux Language Support",
+  "description": "Syntax highlighting, snippets, and run support for the Flux programming language",
+  "version": "0.1.0",
+  "publisher": "ankur-rana",
+  "icon": "icons/flux-icon.png",
+  "author": {
+    "name": "Ankur Rana"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ranaji114/Flux-programming-lang.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "onLanguage:flux"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "flux",
+        "aliases": [
+          "Flux",
+          "flux"
+        ],
+        "extensions": [
+          ".flux",
+          ".flx"
+        ],
+        "configuration": "./language-configuration/language-configuration.json",
+        "icon": {
+          "light": "./icons/flux-icon.png",
+          "dark": "./icons/flux-icon.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "flux",
+        "scopeName": "source.flux",
+        "path": "./syntaxes/flux.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "flux",
+        "path": "./snippets/flux.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Flux Neon",
+        "uiTheme": "vs-dark",
+        "path": "./themes/flux-neon-color-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "flux.runFile",
+        "title": "Flux: Run File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "flux.checkFile",
+        "title": "Flux: Check Syntax"
+      },
+      {
+        "command": "flux.lintFile",
+        "title": "Flux: Lint File"
+      },
+      {
+        "command": "flux.formatFile",
+        "title": "Flux: Format File"
+      },
+      {
+        "command": "flux.openRepl",
+        "title": "Flux: Open REPL"
+      },
+      {
+        "command": "flux.newProject",
+        "title": "Flux: New Project"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "flux.runFile",
+          "when": "resourceLangId == flux",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "flux.runFile",
+          "when": "resourceLangId == flux"
+        },
+        {
+          "command": "flux.checkFile",
+          "when": "resourceLangId == flux"
+        },
+        {
+          "command": "flux.lintFile",
+          "when": "resourceLangId == flux"
+        },
+        {
+          "command": "flux.formatFile",
+          "when": "resourceLangId == flux"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Flux",
+      "properties": {
+        "flux.path": {
+          "type": "string",
+          "default": "flux",
+          "description": "Path to the Flux executable. Leave as 'flux' to use PATH and common installer locations."
+        },
+        "flux.runOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically run Flux files on save (dangerous but useful for quick testing)"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "flux.runFile",
+        "key": "ctrl+r",
+        "mac": "cmd+r",
+        "when": "resourceLangId == flux"
+      },
+      {
+        "command": "flux.runFile",
+        "key": "f5",
+        "when": "resourceLangId == flux"
+      },
+      {
+        "command": "flux.openRepl",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "resourceLangId == flux"
+      }
+    ],
+    "configurationDefaults": {
+      "[flux]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false,
+        "editor.autoClosingBrackets": "always",
+        "editor.autoClosingQuotes": "always"
+      }
+    }
+  },
+  "scripts": {
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^3.9.2"
+  },
+  "keywords": [
+    "flux",
+    "language",
+    "programming",
+    "ankur-rana"
+  ],
+  "type": "commonjs"
+}

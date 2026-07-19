@@ -1,0 +1,21 @@
+[package]
+name = "flux"
+version = "0.1.0"
+edition = "2021"
+description = "Flux — a readable scripting language built in Rust"
+authors = ["Ankur Rana"]
+license = "MIT"
+repository = "https://github.com/ankur-rana/flux"
+keywords = ["language", "interpreter", "scripting"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "flux"
+path = "src/main.rs"
+
+[profile.release]
+strip = true
+opt-level = 3
+lto = true
+
+[dependencies]
