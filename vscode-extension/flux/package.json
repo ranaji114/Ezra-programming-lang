@@ -1,7 +1,7 @@
 {
   "name": "flux",
   "displayName": "Flux Language Support",
-  "description": "Syntax highlighting, snippets, and run support for the Flux programming language",
+  "description": "Syntax highlighting, snippets, run support, and Flux Neon theme for the Flux programming language by Ankur Rana",
   "version": "0.1.0",
   "publisher": "ankur-rana",
   "icon": "icons/flux-icon.png",
@@ -166,13 +166,16 @@
   },
   "devDependencies": {
     "@types/vscode": "^1.75.0",
-    "@vscode/vsce": "^3.9.2"
+    "@vscode/vsce": "^3.9.2",
+    "sharp": "^0.33.5"
   },
   "keywords": [
     "flux",
     "language",
+    "scripting",
     "programming",
-    "ankur-rana"
+    "ankur-rana",
+    "syntax-highlighting"
   ],
   "type": "commonjs"
 }
