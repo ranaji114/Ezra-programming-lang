@@ -1,0 +1,4 @@
+nums is [1, 2, 3, 4, 5]
+evens is nums.filter(n -> n % 2 is 0)
+assert len(evens) is 2, "should have 2 evens"
+assert evens[0] is 2, "first even is 2"

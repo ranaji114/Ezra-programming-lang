@@ -1,0 +1,87 @@
+site_name: Ezra Language
+site_description: Ezra — a readable scripting language built in Rust. Created by Ankur Rana.
+site_author: Ankur Rana
+site_url: https://ranaji114.github.io/Flux-programming-lang
+repo_url: https://github.com/ranaji114/Flux-programming-lang
+repo_name: ranaji114/Flux-programming-lang
+copyright: "© 2026 Ankur Rana — MIT License"
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ranaji114/Flux-programming-lang
+  generator: false
+
+extra_css:
+  - assets/extra.css
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - toc:
+      permalink: true
+  - tables
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Tutorial: tutorial.md
+  - Syntax:
+    - Basics: syntax/basics.md
+    - Control Flow: syntax/control-flow.md
+    - Functions: syntax/functions.md
+    - Advanced: syntax/advanced.md
+  - Standard Library:
+    - Overview: stdlib/index.md
+    - I/O: stdlib/io.md
+    - Math: stdlib/math.md
+    - Collections: stdlib/collections.md
+  - Examples: examples/index.md
+  - CLI Reference: cli-reference.md
+  - Tooling & VS Code: tooling.md
+  - Contributing: contributing.md
+  - Release Notes: release.md

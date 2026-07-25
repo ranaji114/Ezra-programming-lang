@@ -1,0 +1,2 @@
+total is [1, 2, 3, 4, 5].reduce((acc, n) -> acc + n, 0)
+assert total is 15, "sum should be 15"

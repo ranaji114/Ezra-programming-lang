@@ -30,7 +30,7 @@ pub fn format_source(source: &str) -> String {
 }
 
 pub fn format_path(path: &Path, check: bool) -> io::Result<FormatSummary> {
-    let files = collect_flux_files(path)?;
+    let files = collect_ezra_files(path)?;
     let mut changed = Vec::new();
 
     for file in &files {
@@ -57,9 +57,10 @@ pub struct FormatSummary {
     pub changed: Vec<PathBuf>,
 }
 
-pub fn collect_flux_files(path: &Path) -> io::Result<Vec<PathBuf>> {
+/// Collect all `.ez` files under `path` (recursively if a directory).
+pub fn collect_ezra_files(path: &Path) -> io::Result<Vec<PathBuf>> {
     if path.is_file() {
-        return Ok(if is_flux_file(path) {
+        return Ok(if is_ezra_file(path) {
             vec![path.to_path_buf()]
         } else {
             Vec::new()
@@ -74,30 +75,40 @@ pub fn collect_flux_files(path: &Path) -> io::Result<Vec<PathBuf>> {
     }
 
     let mut files = Vec::new();
-    collect_flux_files_recursive(path, &mut files)?;
+    collect_recursive(path, &mut files)?;
     files.sort();
     Ok(files)
 }
 
-fn collect_flux_files_recursive(path: &Path, files: &mut Vec<PathBuf>) -> io::Result<()> {
+/// Backward-compatible alias used by linter and test runner.
+#[inline]
+pub fn collect_flux_files(path: &Path) -> io::Result<Vec<PathBuf>> {
+    collect_ezra_files(path)
+}
+
+fn collect_recursive(path: &Path, files: &mut Vec<PathBuf>) -> io::Result<()> {
     for entry in fs::read_dir(path)? {
         let entry = entry?;
-        let path = entry.path();
+        let p = entry.path();
 
-        if path.is_dir() {
-            if path.file_name().is_some_and(|name| name == "target") {
+        if p.is_dir() {
+            // Skip hidden dirs, target, node_modules, .git
+            let skip = p.file_name().is_some_and(|n| {
+                let s = n.to_string_lossy();
+                s == "target" || s == "node_modules" || s.starts_with('.')
+            });
+            if skip {
                 continue;
             }
-            collect_flux_files_recursive(&path, files)?;
-        } else if is_flux_file(&path) {
-            files.push(path);
+            collect_recursive(&p, files)?;
+        } else if is_ezra_file(&p) {
+            files.push(p);
         }
     }
-
     Ok(())
 }
 
-fn is_flux_file(path: &Path) -> bool {
+fn is_ezra_file(path: &Path) -> bool {
     path.extension()
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("flux"))
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("ez"))
 }

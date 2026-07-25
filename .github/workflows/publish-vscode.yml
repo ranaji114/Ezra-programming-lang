@@ -1,0 +1,72 @@
+name: Publish VS Code Extension
+# Author: Ankur Rana
+# Triggers on GitHub release publish OR manual dispatch
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (package only, do not publish)"
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    name: Package & Publish VS Code Extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vscode-extension/flux
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: vscode-extension/flux/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Package extension (.vsix)
+        run: npm run package
+
+      - name: Rename VSIX to versioned name
+        id: vsix
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          SRC="${NAME}-${VERSION}.vsix"
+          DST="ezra-lang-${VERSION}.vsix"
+          mv "$SRC" "$DST"
+          echo "vsix=$DST" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.vsix.outputs.vsix }}
+          path: vscode-extension/flux/${{ steps.vsix.outputs.vsix }}
+
+      - name: Attach VSIX to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: vscode-extension/flux/${{ steps.vsix.outputs.vsix }}
+
+      - name: Publish to VS Code Marketplace
+        if: ${{ !inputs.dry_run }}
+        run: npx vsce publish --no-dependencies -p "${{ secrets.VSCODE_MARKETPLACE_TOKEN }}"
+        env:
+          VSCE_PAT: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "Dry run — VSIX built but NOT published."
+          echo "VSIX: ${{ steps.vsix.outputs.vsix }}"
+          echo "Version: ${{ steps.vsix.outputs.version }}"

@@ -1,0 +1,2 @@
+r is yes or (1 / 0 > 0)
+assert r is yes, "short-circuit or"

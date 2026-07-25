@@ -1,0 +1,7 @@
+﻿caught is no
+try
+  x is input_number "prompt: "
+catch e
+  caught is yes
+  assert e.contains("invalid number"), "should mention invalid"
+assert caught, "should have caught error"

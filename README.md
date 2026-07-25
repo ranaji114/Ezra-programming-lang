@@ -1,16 +1,19 @@
-# Flux
+# Ezra
 
-Flux is a readable, indentation-based scripting language built in Rust.
+Ezra is a readable, indentation-based scripting language built in Rust.
 
-Created by [Ankur Rana](https://github.com/ankur-rana).
+**Created by [Ankur Rana](https://github.com/ranaji114)**  
+**Version:** 1.0.0  
+**Repository:** https://github.com/ranaji114/Flux-programming-lang  
+**Docs:** https://ranaji114.github.io/Flux-programming-lang
 
-Current status: `v0.1.0-alpha` interpreter release.
+---
 
-## Why Flux?
+## Why Ezra?
 
-Flux is designed for scripting that reads close to plain language:
+Ezra is designed for scripting that reads close to plain language:
 
-~~~flux
+```ezra
 name is input "Enter your name: "
 age is input_number "Enter your age: "
 
@@ -18,114 +21,144 @@ check if age >= 18
   say "Hello {name}, you are an adult."
 otherwise
   say "Hello {name}, you are a minor."
-~~~
+```
 
-## Documentation
+---
 
-The complete documentation is available in the [documentation index](docs/README.md).
+## Install
 
-- [Tutorial](docs/tutorial.md)
-- [Language Reference](docs/language-reference.md)
-- [CLI Reference](docs/cli-reference.md)
-- [Tooling and VS Code](docs/tooling.md)
-- [Release Guide](docs/release.md)
+### Windows
 
-## Install a Release
-
-Download the latest release from:
-
-https://github.com/ranaji114/Flux-programming-lang/releases/latest
-
-Windows:
-
-~~~powershell
+```powershell
 powershell -ExecutionPolicy Bypass -File install/install.ps1
-~~~
+```
 
-Linux and macOS:
+### Linux and macOS
 
-~~~bash
+```bash
 sh install/install.sh
-~~~
+```
 
-Verify the installation:
+### From Source (requires Rust)
 
-~~~bash
-flux --version
-~~~
+```bash
+git clone https://github.com/ranaji114/Flux-programming-lang
+cd Flux-programming-lang
+cargo build --release
+# binary at: target/release/ezra
+```
 
-## Create and Run a Project
+Verify:
 
-~~~bash
-flux new hello_flux
-cd hello_flux
-flux check
-flux run
-~~~
+```bash
+ezra --version    # ezra 1.0.0
+```
 
-Run an individual file:
+---
 
-~~~bash
-flux run examples/hello.flux
-~~~
+## Quick Start
+
+```bash
+ezra new hello_app
+cd hello_app
+ezra run
+```
+
+Or run a single file:
+
+```bash
+ezra run examples/hello.ez
+```
+
+---
 
 ## Language at a Glance
 
-The current interpreter supports:
+| Feature | Example |
+|---|---|
+| Variables | `name is "Rana"` |
+| Conditions | `check if age >= 18 ... otherwise ...` |
+| Loops | `for each item in list`, `repeat 5 times`, `while`, `until` |
+| Functions | `give add(a, b) -> a + b` |
+| Error handling | `try ... catch err ... finally` |
+| Pattern matching | `pick value when "x" ... otherwise` |
+| Text interpolation | `"Hello {name.upper()}"` |
+| Lists | `[1, 2, 3].sort()`, `.filter(n -> n > 2)` |
+| Objects | `{name: "Rana", age: 25}.keys()` |
+| Modules | `use "std/math" as math` |
+| File I/O | `write_file("out.txt", "hello")` |
+| JSON | `parse_json(s)`, `stringify_json(v)` |
 
-- text, numbers, booleans, nothing, lists, and objects
-- variables with is and compound assignment
-- arithmetic, comparison, equality, and logical operators
-- check if, otherwise if, and otherwise
-- repeat N times and for each item in list
-- named functions with give, return, and arrow returns
-- indexing, object properties, text interpolation, and .length
-- built-ins: len, type_of, text, and number
-- text methods: upper, lower, trim, and contains
-- list methods: push, take, and drop
-- say, write, print, warn, fail, error, debug, clear, and exit
-
-See the [Language Reference](docs/language-reference.md) for exact behavior.
+---
 
 ## CLI
 
-~~~text
-flux new <project-name>
-flux run [file.flux]
-flux check [file.flux]
-flux test [tests-dir-or-file]
-flux fmt [path] [--check]
-flux lint [path]
-flux build [project-dir]
-flux repl
-flux --version
-~~~
+```
+ezra new <project-name>     Create a new project
+ezra run [file.ez]          Run a source file
+ezra check [file.ez]        Parse without running
+ezra test [path]            Run test files (*_test.ez)
+ezra fmt [path] [--check]   Format .ez files
+ezra lint [path]            Lint .ez files
+ezra build [project-dir]    Validate project structure
+ezra repl                   Interactive REPL
+ezra --version              Print version
+```
 
-## VS Code
+---
 
-The VS Code extension provides Flux file detection, syntax highlighting,
-snippets, run/check/lint/format commands, and the Flux Neon color theme.
+## VS Code Extension
 
-See the [VS Code guide](docs/tooling.md#vs-code-extension) for installation
-and configuration.
+The VS Code extension provides `.ez` syntax highlighting, snippets,
+run/check/lint/format commands, REPL integration, and the Flux Neon color theme.
 
-## Development Checks
+```bash
+cd vscode-extension/flux
+npm install
+npm run package
+# Install the generated .vsix from VS Code > Extensions > Install from VSIX
+```
 
-~~~bash
-cargo fmt -- --check
-cargo test
-cargo clippy -- -D warnings
-cargo build
-~~~
+---
 
-## Release Status
+## Documentation
 
-Flux is ready for a first public alpha release. It is not a stable v1 language
-yet. Syntax, runtime behavior, and standard library APIs may change while the
-language matures.
+| Doc | Link |
+|---|---|
+| Homepage | [docs/index.md](docs/index.md) |
+| Getting Started | [docs/getting-started.md](docs/getting-started.md) |
+| Tutorial | [docs/tutorial.md](docs/tutorial.md) |
+| Language Reference | [docs/language-reference.md](docs/language-reference.md) |
+| CLI Reference | [docs/cli-reference.md](docs/cli-reference.md) |
+| Standard Library | [docs/stdlib/index.md](docs/stdlib/index.md) |
+| Examples | [docs/examples/index.md](docs/examples/index.md) |
+| Tooling & VS Code | [docs/tooling.md](docs/tooling.md) |
+| Contributing | [docs/contributing.md](docs/contributing.md) |
 
-The current build command validates a project and writes a manifest. It does
-not compile Flux programs into standalone native executables.
+---
+
+## Development
+
+```bash
+cargo fmt -- --check        # check formatting
+cargo clippy                # lint (no errors expected)
+cargo test                  # 25 unit + 6 CLI smoke tests
+cargo build --release       # release binary
+```
+
+Build and package locally (Windows):
+
+```powershell
+.\build.ps1 --all
+```
+
+Build and package locally (Linux/macOS):
+
+```bash
+./build.sh --all
+```
+
+---
 
 ## License
 

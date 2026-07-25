@@ -1,0 +1,2 @@
+﻿content is read_file("definitely_does_not_exist_xyz.txt")
+assert content is nothing, "missing file returns nothing"

@@ -1,39 +1,56 @@
 {
-  "name": "flux",
-  "displayName": "Flux Language Support",
-  "description": "Syntax highlighting, snippets, run support, and Flux Neon theme for the Flux programming language by Ankur Rana",
-  "version": "0.1.0",
+  "name": "ezra-lang",
+  "displayName": "Ezra Language",
+  "description": "Syntax highlighting, IntelliSense, snippets, run/check/lint/format, LSP, and Ezra Neon theme — by Ankur Rana",
+  "version": "1.0.0",
   "publisher": "ankur-rana",
-  "icon": "icons/flux-icon.png",
   "author": {
-    "name": "Ankur Rana"
+    "name": "Ankur Rana",
+    "url": "https://github.com/ranaji114"
   },
+  "icon": "icons/flux-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/ranaji114/Flux-programming-lang.git"
   },
+  "bugs": {
+    "url": "https://github.com/ranaji114/Flux-programming-lang/issues"
+  },
+  "homepage": "https://ranaji114.github.io/Flux-programming-lang",
   "license": "MIT",
   "engines": {
     "vscode": "^1.75.0"
   },
   "categories": [
     "Programming Languages",
-    "Snippets"
+    "Snippets",
+    "Themes",
+    "Formatters",
+    "Linters"
+  ],
+  "keywords": [
+    "ezra",
+    "flux",
+    "scripting",
+    "ankur-rana",
+    "syntax-highlighting",
+    "language"
   ],
   "activationEvents": [
-    "onLanguage:flux"
+    "onLanguage:ezra"
   ],
   "main": "./extension.js",
   "contributes": {
     "languages": [
       {
-        "id": "flux",
+        "id": "ezra",
         "aliases": [
-          "Flux",
-          "flux"
+          "Ezra",
+          "ezra"
         ],
         "extensions": [
-          ".flux",
+          ".ez",
+          ".ar",
           ".flx"
         ],
         "configuration": "./language-configuration/language-configuration.json",
@@ -45,137 +62,170 @@
     ],
     "grammars": [
       {
-        "language": "flux",
-        "scopeName": "source.flux",
-        "path": "./syntaxes/flux.tmLanguage.json"
+        "language": "ezra",
+        "scopeName": "source.ezra",
+        "path": "./syntaxes/ezra.tmLanguage.json"
       }
     ],
     "snippets": [
       {
-        "language": "flux",
-        "path": "./snippets/flux.json"
+        "language": "ezra",
+        "path": "./snippets/ezra.json"
       }
     ],
     "themes": [
       {
-        "label": "Flux Neon",
+        "label": "Ezra Neon",
         "uiTheme": "vs-dark",
-        "path": "./themes/flux-neon-color-theme.json"
+        "path": "./themes/ezra-neon-color-theme.json"
       }
     ],
     "commands": [
       {
-        "command": "flux.runFile",
-        "title": "Flux: Run File",
+        "command": "ezra.runFile",
+        "title": "Ezra: Run File",
         "icon": "$(play)"
       },
       {
-        "command": "flux.checkFile",
-        "title": "Flux: Check Syntax"
+        "command": "ezra.checkFile",
+        "title": "Ezra: Check Syntax"
       },
       {
-        "command": "flux.lintFile",
-        "title": "Flux: Lint File"
+        "command": "ezra.lintFile",
+        "title": "Ezra: Lint File"
       },
       {
-        "command": "flux.formatFile",
-        "title": "Flux: Format File"
+        "command": "ezra.formatFile",
+        "title": "Ezra: Format File"
       },
       {
-        "command": "flux.openRepl",
-        "title": "Flux: Open REPL"
+        "command": "ezra.openRepl",
+        "title": "Ezra: Open REPL"
       },
       {
-        "command": "flux.newProject",
-        "title": "Flux: New Project"
+        "command": "ezra.newProject",
+        "title": "Ezra: New Project"
+      },
+      {
+        "command": "ezra.stopRun",
+        "title": "Ezra: Stop Running",
+        "icon": "$(debug-stop)"
       }
     ],
     "menus": {
       "editor/title/run": [
         {
-          "command": "flux.runFile",
-          "when": "resourceLangId == flux",
-          "group": "navigation"
+          "command": "ezra.runFile",
+          "when": "resourceLangId == ezra",
+          "group": "navigation@1"
+        },
+        {
+          "command": "ezra.stopRun",
+          "when": "resourceLangId == ezra && ezra.running",
+          "group": "navigation@2"
         }
       ],
       "commandPalette": [
-        {
-          "command": "flux.runFile",
-          "when": "resourceLangId == flux"
-        },
-        {
-          "command": "flux.checkFile",
-          "when": "resourceLangId == flux"
-        },
-        {
-          "command": "flux.lintFile",
-          "when": "resourceLangId == flux"
-        },
-        {
-          "command": "flux.formatFile",
-          "when": "resourceLangId == flux"
-        }
+        { "command": "ezra.runFile",    "when": "resourceLangId == ezra" },
+        { "command": "ezra.checkFile",  "when": "resourceLangId == ezra" },
+        { "command": "ezra.lintFile",   "when": "resourceLangId == ezra" },
+        { "command": "ezra.formatFile", "when": "resourceLangId == ezra" },
+        { "command": "ezra.stopRun",    "when": "resourceLangId == ezra" }
       ]
     },
     "configuration": {
-      "title": "Flux",
+      "title": "Ezra Language",
       "properties": {
-        "flux.path": {
+        "ezra.executablePath": {
           "type": "string",
-          "default": "flux",
-          "description": "Path to the Flux executable. Leave as 'flux' to use PATH and common installer locations."
+          "default": "ezra",
+          "markdownDescription": "Path to the `ezra` executable. Leave as `ezra` to resolve from PATH and common install locations."
         },
-        "flux.runOnSave": {
+        "ezra.runOnSave": {
           "type": "boolean",
           "default": false,
-          "description": "Automatically run Flux files on save (dangerous but useful for quick testing)"
+          "description": "Automatically run the active Ezra file when it is saved. Disable if the program reads input."
+        },
+        "ezra.lsp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the Ezra Language Server (diagnostics, hover, completions, document symbols)."
+        },
+        "ezra.lsp.serverPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Explicit path to the `ezra-lsp` binary. Leave empty to auto-detect next to `ezra`."
+        },
+        "ezra.lsp.trace": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace LSP communication in the output panel."
         }
       }
     },
     "keybindings": [
       {
-        "command": "flux.runFile",
+        "command": "ezra.runFile",
         "key": "ctrl+r",
         "mac": "cmd+r",
-        "when": "resourceLangId == flux"
+        "when": "resourceLangId == ezra"
       },
       {
-        "command": "flux.runFile",
+        "command": "ezra.runFile",
         "key": "f5",
-        "when": "resourceLangId == flux"
+        "when": "resourceLangId == ezra"
       },
       {
-        "command": "flux.openRepl",
+        "command": "ezra.checkFile",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "resourceLangId == ezra"
+      },
+      {
+        "command": "ezra.openRepl",
         "key": "ctrl+shift+r",
         "mac": "cmd+shift+r",
-        "when": "resourceLangId == flux"
+        "when": "resourceLangId == ezra"
       }
     ],
     "configurationDefaults": {
-      "[flux]": {
+      "[ezra]": {
         "editor.tabSize": 2,
         "editor.insertSpaces": true,
         "editor.detectIndentation": false,
         "editor.autoClosingBrackets": "always",
-        "editor.autoClosingQuotes": "always"
+        "editor.autoClosingQuotes": "always",
+        "editor.trimAutoWhitespace": true,
+        "editor.formatOnSave": false
       }
-    }
+    },
+    "problemMatchers": [
+      {
+        "name": "ezra",
+        "owner": "ezra",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^error at (\\d+):(\\d+): (.+)$",
+          "line": 1,
+          "column": 2,
+          "message": 3
+        }
+      }
+    ]
   },
   "scripts": {
-    "package": "vsce package"
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies",
+    "lint": "eslint extension.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.75.0",
     "@vscode/vsce": "^3.9.2",
     "sharp": "^0.33.5"
   },
-  "keywords": [
-    "flux",
-    "language",
-    "scripting",
-    "programming",
-    "ankur-rana",
-    "syntax-highlighting"
-  ],
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
   "type": "commonjs"
 }

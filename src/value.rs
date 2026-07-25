@@ -20,6 +20,10 @@ pub enum Value {
     List(Vec<Value>),
     Object(BTreeMap<String, Value>),
     Function(Rc<FunctionValue>),
+    Module(std::collections::HashMap<String, Value>),
+    /// A compiled function identified by its index in `Program::functions`.
+    /// Used exclusively by FastVM; never exposed to user code.
+    CompiledFn(usize),
 }
 
 impl Value {
@@ -32,6 +36,8 @@ impl Value {
             Value::List(value) => !value.is_empty(),
             Value::Object(value) => !value.is_empty(),
             Value::Function(_) => true,
+            Value::Module(_) => true,
+            Value::CompiledFn(_) => true,
         }
     }
 
@@ -44,6 +50,8 @@ impl Value {
             Value::List(_) => "list",
             Value::Object(_) => "object",
             Value::Function(_) => "function",
+            Value::Module(_) => "module",
+            Value::CompiledFn(_) => "function",
         }
     }
 }
@@ -58,6 +66,7 @@ impl PartialEq for Value {
             (Value::List(a), Value::List(b)) => a == b,
             (Value::Object(a), Value::Object(b)) => a == b,
             (Value::Function(a), Value::Function(b)) => Rc::ptr_eq(a, b),
+            (Value::CompiledFn(a), Value::CompiledFn(b)) => a == b,
             _ => false,
         }
     }
@@ -67,7 +76,16 @@ impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Value::Number(value) => {
-                if value.fract() == 0.0 {
+                if value.is_nan() {
+                    write!(f, "nan")
+                } else if value.is_infinite() {
+                    if *value > 0.0 {
+                        write!(f, "infinity")
+                    } else {
+                        write!(f, "-infinity")
+                    }
+                } else if value.fract() == 0.0 && value.abs() < 1e15 {
+                    // Safe range for lossless i64 representation.
                     write!(f, "{}", *value as i64)
                 } else {
                     write!(f, "{value}")
@@ -98,6 +116,8 @@ impl fmt::Display for Value {
                 write!(f, "}}")
             }
             Value::Function(function) => write!(f, "<function {}>", function.name),
+            Value::Module(_) => write!(f, "<module>"),
+            Value::CompiledFn(_) => write!(f, "<function>"),
         }
     }
 }

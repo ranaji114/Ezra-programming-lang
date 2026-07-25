@@ -1,17 +1,22 @@
 [package]
-name = "flux"
+name = "ezra"
 version = "0.1.0"
 edition = "2021"
-description = "Flux — a readable scripting language built in Rust"
+description = "Ezra — a readable scripting language built in Rust"
 authors = ["Ankur Rana"]
 license = "MIT"
-repository = "https://github.com/ankur-rana/flux"
-keywords = ["language", "interpreter", "scripting"]
-categories = ["command-line-utilities"]
+repository = "https://github.com/ranaji114/Flux-programming-lang"
+homepage = "https://ranaji114.github.io/Flux-programming-lang"
+keywords = ["language", "interpreter", "scripting", "ezra"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
-name = "flux"
+name = "ezra"
 path = "src/main.rs"
+
+[[bin]]
+name = "ezra-lsp"
+path = "src/lsp_server.rs"
 
 [profile.release]
 strip = true
@@ -19,3 +24,6 @@ opt-level = 3
 lto = true
 
 [dependencies]
+serde_json = "1"
+tower-lsp = "0.20"
+tokio = { version = "1", features = ["full"] }

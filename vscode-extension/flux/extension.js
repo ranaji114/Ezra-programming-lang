@@ -1,206 +1,256 @@
+/**
+ * Ezra Language VS Code Extension
+ * Author: Ankur Rana
+ * Version: 1.0.0
+ */
+
+'use strict';
+
 const vscode = require('vscode');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+/** @type {vscode.OutputChannel} */
 let outputChannel;
 
-/**
- * @param {vscode.ExtensionContext} context
- */
+/** @type {import('vscode-languageclient').LanguageClient | null} */
+let lspClient = null;
+
+/** @type {import('child_process').ChildProcess | null} */
+let runningProcess = null;
+
+// ---------------------------------------------------------------------------
+// Activation
+// ---------------------------------------------------------------------------
+
+/** @param {vscode.ExtensionContext} context */
 function activate(context) {
-  outputChannel = vscode.window.createOutputChannel('Flux');
+  outputChannel = vscode.window.createOutputChannel('Ezra');
   context.subscriptions.push(outputChannel);
 
+  // Try to start LSP
+  activateLsp(context);
+
+  // Run-on-save
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
-      if (doc.languageId === 'flux') {
-        const config = vscode.workspace.getConfiguration('flux');
-        if (config.get('runOnSave')) {
-          runFile(doc.uri);
-        }
+      if (doc.languageId === 'ezra') {
+        const cfg = vscode.workspace.getConfiguration('ezra');
+        if (cfg.get('runOnSave')) runFile(doc.uri);
       }
     })
   );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('flux.runFile', () => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor && editor.document.languageId === 'flux') {
-        runFile(editor.document.uri);
-      } else {
-        vscode.window.showWarningMessage('Please open a .flux file first.');
-      }
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('flux.checkFile', () => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor) {
-        runFluxCommand(['check', editor.document.uri.fsPath], 'Syntax Check');
-      }
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('flux.lintFile', () => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor) {
-        runFluxCommand(['lint', editor.document.uri.fsPath], 'Lint');
-      }
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('flux.formatFile', () => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor) {
-        runFluxCommand(['fmt', editor.document.uri.fsPath], 'Format');
-      }
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('flux.openRepl', () => {
-      const terminal = vscode.window.createTerminal('Flux REPL');
-      terminal.show();
-      terminal.sendText(`${quoteForTerminal(getFluxPath())} repl`);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('flux.newProject', async () => {
+  // Register commands
+  const cmds = [
+    ['ezra.runFile', () => {
+      const ed = vscode.window.activeTextEditor;
+      if (ed?.document.languageId === 'ezra') runFile(ed.document.uri);
+      else vscode.window.showWarningMessage('Open an .ez file first.');
+    }],
+    ['ezra.stopRun', () => {
+      if (runningProcess) { runningProcess.kill(); runningProcess = null; }
+    }],
+    ['ezra.checkFile', () => {
+      const ed = vscode.window.activeTextEditor;
+      if (ed) ezraCmd(['check', ed.document.uri.fsPath], 'Check');
+    }],
+    ['ezra.lintFile', () => {
+      const ed = vscode.window.activeTextEditor;
+      if (ed) ezraCmd(['lint', ed.document.uri.fsPath], 'Lint');
+    }],
+    ['ezra.formatFile', () => {
+      const ed = vscode.window.activeTextEditor;
+      if (ed) ezraCmd(['fmt', ed.document.uri.fsPath], 'Format');
+    }],
+    ['ezra.openRepl', () => {
+      const t = vscode.window.createTerminal('Ezra REPL');
+      t.show();
+      t.sendText(quote(getEzraPath()) + ' repl');
+    }],
+    ['ezra.newProject', async () => {
       const name = await vscode.window.showInputBox({
-        prompt: 'Enter project name',
-        placeHolder: 'my_flux_app',
+        prompt: 'New Ezra project name',
+        placeHolder: 'my_ezra_app',
+        validateInput: v => /^[a-zA-Z0-9_-]+$/.test(v) ? null : 'Only letters, numbers, _ and - allowed',
       });
       if (name) {
-        const cwd = vscode.workspace.workspaceFolders
-          ? vscode.workspace.workspaceFolders[0].uri.fsPath
-          : process.cwd();
-        runFluxCommand(['new', name], 'New Project', cwd);
+        const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+        ezraCmd(['new', name], 'New Project', cwd);
       }
-    })
-  );
+    }],
+  ];
 
-  console.log('Flux extension activated.');
-}
-
-function deactivate() {}
-
-function getFluxPath() {
-  const config = vscode.workspace.getConfiguration('flux');
-  const configuredPath = String(config.get('path') || '').trim();
-  if (configuredPath && configuredPath !== 'flux') {
-    return configuredPath;
+  for (const [id, handler] of cmds) {
+    context.subscriptions.push(vscode.commands.registerCommand(id, handler));
   }
 
-  for (const candidate of getInstallerCandidates()) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
+  // Context key for stop-button visibility
+  vscode.commands.executeCommand('setContext', 'ezra.running', false);
 
-  return 'flux';
+  console.log('Ezra extension activated — Created by Ankur Rana');
 }
 
-function getInstallerCandidates() {
+function deactivate() {
+  lspClient?.stop();
+  runningProcess?.kill();
+}
+
+// ---------------------------------------------------------------------------
+// LSP Client
+// ---------------------------------------------------------------------------
+
+/** @param {vscode.ExtensionContext} context */
+function activateLsp(context) {
+  const cfg = vscode.workspace.getConfiguration('ezra');
+  if (!cfg.get('lsp.enabled')) return;
+
+  const lspBin = getLspPath();
+  if (!lspBin || !fs.existsSync(lspBin)) {
+    outputChannel.appendLine(`[LSP] ezra-lsp not found — diagnostics/hover/completions disabled.`);
+    outputChannel.appendLine(`[LSP] Expected: ${lspBin || '<not resolved>'}`);
+    return;
+  }
+
+  let LanguageClient;
+  try {
+    ({ LanguageClient } = require('vscode-languageclient/node'));
+  } catch {
+    outputChannel.appendLine('[LSP] vscode-languageclient not installed — run: npm install');
+    return;
+  }
+
+  const serverOptions = {
+    command: lspBin,
+    args: [],
+    options: { env: { ...process.env, RUST_LOG: 'error' } },
+  };
+
+  const traceLevel = cfg.get('lsp.trace') || 'off';
+  const clientOptions = {
+    documentSelector: [{ scheme: 'file', language: 'ezra' }],
+    synchronize: {
+      fileEvents: vscode.workspace.createFileSystemWatcher('**/*.ez'),
+    },
+    traceOutputChannel: outputChannel,
+    trace: { server: traceLevel },
+  };
+
+  lspClient = new LanguageClient('ezra-lsp', 'Ezra Language Server', serverOptions, clientOptions);
+  lspClient.start();
+  context.subscriptions.push(lspClient);
+  outputChannel.appendLine(`[LSP] Started: ${lspBin}`);
+}
+
+// ---------------------------------------------------------------------------
+// Path resolution
+// ---------------------------------------------------------------------------
+
+function getEzraPath() {
+  const cfg = vscode.workspace.getConfiguration('ezra');
+  const explicit = String(cfg.get('executablePath') || '').trim();
+  if (explicit && explicit !== 'ezra') return explicit;
+
+  for (const c of installerCandidates()) {
+    if (fs.existsSync(c)) return c;
+  }
+  return 'ezra';
+}
+
+function getLspPath() {
+  const cfg = vscode.workspace.getConfiguration('ezra');
+  const explicit = String(cfg.get('lsp.serverPath') || '').trim();
+  if (explicit) return explicit;
+
+  const ext = process.platform === 'win32' ? '.exe' : '';
+  const base = path.dirname(getEzraPath());
   const candidates = [];
+  if (base && base !== '.') candidates.push(path.join(base, `ezra-lsp${ext}`));
+  candidates.push(`ezra-lsp${ext}`);
+  for (const c of candidates) if (fs.existsSync(c)) return c;
+  return candidates[0] ?? null;
+}
 
+function installerCandidates() {
   if (process.platform === 'win32') {
-    if (process.env.LOCALAPPDATA) {
-      candidates.push(path.join(process.env.LOCALAPPDATA, 'Flux', 'bin', 'flux.exe'));
-    }
-    if (process.env.USERPROFILE) {
-      candidates.push(path.join(process.env.USERPROFILE, '.flux', 'bin', 'flux.exe'));
-    }
-    return candidates;
+    const lad = process.env.LOCALAPPDATA ?? '';
+    const up  = process.env.USERPROFILE ?? '';
+    return [
+      path.join(lad, 'Ezra', 'bin', 'ezra.exe'),
+      path.join(up, '.ezra', 'bin', 'ezra.exe'),
+      path.join(up, '.local', 'bin', 'ezra.exe'),
+    ];
   }
-
-  if (process.env.HOME) {
-    candidates.push(path.join(process.env.HOME, '.local', 'bin', 'flux'));
-    candidates.push(path.join(process.env.HOME, '.flux', 'bin', 'flux'));
-  }
-
-  return candidates;
+  const home = process.env.HOME ?? '';
+  return [
+    path.join(home, '.local', 'bin', 'ezra'),
+    path.join(home, '.ezra', 'bin', 'ezra'),
+  ];
 }
 
-function quoteForTerminal(command) {
-  if (!/\s|["'&()]/.test(command)) {
-    return command;
-  }
-  return `"${command.replace(/"/g, '\\"')}"`;
+function quote(cmd) {
+  return /[\s"'&()]/.test(cmd) ? `"${cmd.replace(/"/g, '\\"')}"` : cmd;
 }
 
-function spawnFlux(args, cwd) {
-  const options = {};
-  if (cwd) {
-    options.cwd = cwd;
-  }
-  return spawn(getFluxPath(), args, options);
-}
-
-function showSpawnError(error) {
-  outputChannel.appendLine('');
-  outputChannel.appendLine(`Could not start Flux from: ${getFluxPath()}`);
-  outputChannel.appendLine(`Reason: ${error.message}`);
-  outputChannel.appendLine('');
-  outputChannel.appendLine('Install Flux, restart VS Code, or set "Flux: Path" to the full executable path.');
-  vscode.window.showErrorMessage('Flux executable was not found. Install Flux or update the Flux path setting.');
-}
+// ---------------------------------------------------------------------------
+// Run file
+// ---------------------------------------------------------------------------
 
 function runFile(uri) {
-  const filePath = uri.fsPath;
+  if (runningProcess) {
+    runningProcess.kill();
+    runningProcess = null;
+  }
 
+  const file = uri.fsPath;
   outputChannel.show(true);
-  outputChannel.appendLine(`\n> Running ${path.basename(filePath)}...\n`);
+  outputChannel.appendLine(`\n▶  Running ${path.basename(file)}...\n`);
+  vscode.commands.executeCommand('setContext', 'ezra.running', true);
 
-  const child = spawnFlux(['run', filePath]);
+  const child = spawn(getEzraPath(), ['run', file], { stdio: 'pipe' });
+  runningProcess = child;
 
-  child.stdout.on('data', (data) => {
-    outputChannel.append(data.toString());
+  child.stdout.on('data', d => outputChannel.append(d.toString()));
+  child.stderr.on('data', d => outputChannel.append(d.toString()));
+  child.on('error', err => {
+    outputChannel.appendLine(`\n⚠  Could not start Ezra: ${err.message}`);
+    outputChannel.appendLine(`   Configured path: ${getEzraPath()}`);
+    outputChannel.appendLine(`   Install Ezra or set "ezra.executablePath" in settings.\n`);
+    vscode.window.showErrorMessage(
+      'Ezra executable not found.',
+      'Open Settings'
+    ).then(v => v && vscode.commands.executeCommand('workbench.action.openSettings', 'ezra.executablePath'));
+    vscode.commands.executeCommand('setContext', 'ezra.running', false);
+    runningProcess = null;
   });
-
-  child.stderr.on('data', (data) => {
-    outputChannel.append(data.toString());
-  });
-
-  child.on('error', showSpawnError);
-
-  child.on('close', (code) => {
-    if (code === 0) {
-      outputChannel.appendLine(`\nOK (exit code ${code})\n`);
-    } else if (code !== null) {
-      outputChannel.appendLine(`\nFailed (exit code ${code})\n`);
-    }
+  child.on('close', code => {
+    const icon = code === 0 ? '✓' : '✗';
+    outputChannel.appendLine(`\n${icon}  Exited (code ${code ?? '?'})\n`);
+    vscode.commands.executeCommand('setContext', 'ezra.running', false);
+    runningProcess = null;
   });
 }
 
-function runFluxCommand(args, label, cwd) {
+// ---------------------------------------------------------------------------
+// Generic Ezra command (check, lint, fmt, new)
+// ---------------------------------------------------------------------------
+
+function ezraCmd(args, label, cwd) {
   outputChannel.show(true);
-  outputChannel.appendLine(`\n> Flux ${label}...\n`);
+  outputChannel.appendLine(`\n●  Ezra ${label}...\n`);
 
-  const child = spawnFlux(args, cwd);
+  const opts = cwd ? { cwd } : {};
+  const child = spawn(getEzraPath(), args, { stdio: 'pipe', ...opts });
 
-  child.stdout.on('data', (data) => {
-    outputChannel.append(data.toString());
+  child.stdout.on('data', d => outputChannel.append(d.toString()));
+  child.stderr.on('data', d => outputChannel.append(d.toString()));
+  child.on('error', err => {
+    outputChannel.appendLine(`\n⚠  ${err.message}\n`);
   });
-
-  child.stderr.on('data', (data) => {
-    outputChannel.append(data.toString());
-  });
-
-  child.on('error', showSpawnError);
-
-  child.on('close', (code) => {
-    if (code !== null) {
-      outputChannel.appendLine(`\n(exit code ${code})\n`);
-    }
+  child.on('close', code => {
+    outputChannel.appendLine(`\n(exit ${code ?? '?'})\n`);
   });
 }
 
-module.exports = {
-  activate,
-  deactivate,
-};
+module.exports = { activate, deactivate };

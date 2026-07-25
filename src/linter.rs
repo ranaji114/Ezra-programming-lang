@@ -1,7 +1,7 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::formatter::collect_flux_files;
+use crate::formatter::collect_ezra_files;
 use crate::parser;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,14 +20,12 @@ pub struct LintMessage {
 }
 
 pub fn lint_path(path: &Path) -> io::Result<Vec<LintMessage>> {
-    let files = collect_flux_files(path)?;
+    let files = collect_ezra_files(path)?;
     let mut messages = Vec::new();
-
     for file in files {
         let source = std::fs::read_to_string(&file)?;
         messages.extend(lint_source(&file, &source));
     }
-
     Ok(messages)
 }
 
@@ -62,7 +60,7 @@ pub fn lint_source(path: &Path, source: &str) -> Vec<LintMessage> {
         messages.push(LintMessage {
             path: path.to_path_buf(),
             line: source.lines().count().max(1),
-            column: source.lines().last().map_or(1, |line| line.len() + 1),
+            column: source.lines().last().map_or(1, |l| l.len() + 1),
             severity: Severity::Warning,
             message: "file should end with a newline".to_string(),
         });

@@ -1,0 +1,22 @@
+Package: ezra-lang
+Version: 1.0.0
+Section: devel
+Priority: optional
+Architecture: amd64
+Installed-Size: 8192
+Maintainer: Ankur Rana <ankur@ranaji114.github.io>
+Homepage: https://ranaji114.github.io/Flux-programming-lang
+Description: Ezra scripting language interpreter
+ Ezra is a readable, indentation-based scripting language built in Rust.
+ .
+ Features:
+  - Clean natural syntax: `name is "Rana"`, `check if age >= 18`
+  - Built-in formatter, linter, test runner, REPL
+  - File I/O, JSON, math, OS builtins
+  - VS Code extension with syntax highlighting and LSP
+ .
+ Created by Ankur Rana.
+ Repository: https://github.com/ranaji114/Flux-programming-lang
+Depends: libc6 (>= 2.17)
+Recommends: code
+Suggests: ezra-lang-vscode

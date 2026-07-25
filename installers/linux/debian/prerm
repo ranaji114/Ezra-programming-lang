@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+# Clean up MIME registration
+if [ -f /usr/share/mime/packages/ezra.xml ]; then
+    rm -f /usr/share/mime/packages/ezra.xml
+    update-mime-database /usr/share/mime >/dev/null 2>&1 || true
+fi
+
+echo "Ezra uninstalled."

@@ -1,0 +1,9 @@
+﻿const X is 42
+caught is no
+try
+  X is 99
+catch e
+  caught is yes
+  assert e.contains("constant"), "should mention constant"
+assert caught, "reassign should throw"
+assert X is 42, "X should still be 42"

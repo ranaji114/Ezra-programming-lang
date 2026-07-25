@@ -1,4 +1,4 @@
-say "Flux Calculator"
+say "Ezra Calculator"
 say "Choose an operation: +, -, *, /"
 
 first is input_number "First number: "

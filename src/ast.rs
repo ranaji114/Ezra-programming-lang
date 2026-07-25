@@ -44,6 +44,84 @@ pub enum Stmt {
     Break,
     Next,
     Expr(Expr),
+
+    Try {
+        body: Vec<Stmt>,
+        catches: Vec<CatchClause>,
+        finally_body: Option<Vec<Stmt>>,
+        line: usize,
+    },
+    Throw(Expr),
+
+    Use {
+        path: String,
+        alias: Option<String>,
+    },
+    UseFrom {
+        path: String,
+        names: Vec<String>,
+    },
+    Export {
+        name: String,
+    },
+
+    Pick {
+        expression: Expr,
+        cases: Vec<PickCase>,
+        else_case: Option<Vec<Stmt>>,
+    },
+
+    Let {
+        name: String,
+        type_hint: Option<String>,
+        expr: Expr,
+    },
+    Const {
+        name: String,
+        type_hint: Option<String>,
+        expr: Expr,
+    },
+    Struct {
+        name: String,
+        fields: Vec<String>,
+    },
+    Enum {
+        name: String,
+        variants: Vec<String>,
+    },
+    Impl {
+        struct_name: String,
+        methods: Vec<Stmt>,
+    },
+
+    Assert {
+        condition: Expr,
+        message: Option<Expr>,
+    },
+
+    Loop {
+        body: Vec<Stmt>,
+    },
+    While {
+        condition: Expr,
+        body: Vec<Stmt>,
+    },
+    Until {
+        condition: Expr,
+        body: Vec<Stmt>,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub struct CatchClause {
+    pub error_name: Option<String>,
+    pub body: Vec<Stmt>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PickCase {
+    pub pattern: Expr,
+    pub body: Vec<Stmt>,
 }
 
 #[derive(Debug, Clone)]
@@ -52,7 +130,10 @@ pub enum Expr {
     Text(String),
     Bool(bool),
     Nothing,
-    Variable(String),
+    Variable {
+        name: String,
+        line: usize,
+    },
     List(Vec<Expr>),
     Object(Vec<(String, Expr)>),
     Input(Box<Expr>),
@@ -79,6 +160,37 @@ pub enum Expr {
         name: String,
     },
     Grouping(Box<Expr>),
+    InterpolatedText(Vec<TextPart>),
+    ArrowFunction {
+        params: Vec<String>,
+        body: Box<Expr>,
+    },
+    Pipe {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    Ternary {
+        condition: Box<Expr>,
+        then_expr: Box<Expr>,
+        else_expr: Box<Expr>,
+    },
+    TypeHint {
+        expr: Box<Expr>,
+        type_name: String,
+    },
+    SizeOf(Box<Expr>),
+    TypeOf(Box<Expr>),
+    Spread(Box<Expr>),
+    OptionalChain {
+        target: Box<Expr>,
+        property: String,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub enum TextPart {
+    Literal(String),
+    Interpolation(Expr),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -94,6 +206,7 @@ pub enum BinaryOp {
     Multiply,
     Divide,
     Remainder,
+    Power,
     Greater,
     GreaterEqual,
     Less,
@@ -102,6 +215,11 @@ pub enum BinaryOp {
     NotEqual,
     And,
     Or,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+    ShiftLeft,
+    ShiftRight,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

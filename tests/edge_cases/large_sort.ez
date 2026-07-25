@@ -1,0 +1,4 @@
+nums is range(3000)
+sorted is nums.sort()
+assert sorted[0] is 0
+assert sorted[2999] is 2999

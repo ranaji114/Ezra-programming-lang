@@ -1,0 +1,13 @@
+﻿outer_caught is no
+inner_caught is no
+try
+  try
+    throw "inner"
+  catch e1
+    inner_caught is yes
+    throw "outer " + e1
+catch e2
+  outer_caught is yes
+  assert e2.contains("outer"), "outer should contain rethrown message"
+assert inner_caught, "inner catch ran"
+assert outer_caught, "outer catch ran"

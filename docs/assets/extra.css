@@ -1,0 +1,36 @@
+/* Ezra docs — custom styles. Created by Ankur Rana */
+
+:root {
+  --ezra-accent: #00e5ff;
+}
+
+/* Author footer */
+.md-footer-meta {
+  font-size: 0.75rem;
+}
+
+/* Code blocks: use Ezra file extension colour */
+.language-ezra .hljs-keyword,
+.language-ezra .hljs-built_in {
+  color: #c792ea;
+}
+
+/* Inline code highlight */
+code {
+  border-radius: 3px;
+}
+
+/* Callout for pitfalls */
+.admonition.pitfall {
+  border-left-color: #ff5252;
+}
+
+/* "Created by Ankur Rana" visible in every footer */
+.md-footer::before {
+  content: "Created by Ankur Rana · Ezra Language v0.1.0";
+  display: block;
+  text-align: center;
+  padding: 0.4rem;
+  font-size: 0.75rem;
+  opacity: 0.6;
+}

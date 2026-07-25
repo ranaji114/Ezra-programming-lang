@@ -1,13 +1,13 @@
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct FluxError {
+pub struct EzraError {
     pub message: String,
     pub line: usize,
     pub column: usize,
 }
 
-impl FluxError {
+impl EzraError {
     pub fn new(message: impl Into<String>, line: usize, column: usize) -> Self {
         Self {
             message: message.into(),
@@ -23,9 +23,25 @@ impl FluxError {
             column: 0,
         }
     }
+
+    pub fn runtime_at(message: impl Into<String>, line: usize, column: usize) -> Self {
+        Self {
+            message: message.into(),
+            line,
+            column,
+        }
+    }
+
+    pub fn with_line(mut self, line: usize) -> Self {
+        if self.line == 0 {
+            self.line = line;
+            self.column = 1;
+        }
+        self
+    }
 }
 
-impl fmt::Display for FluxError {
+impl fmt::Display for EzraError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.line == 0 {
             write!(f, "error: {}", self.message)
@@ -39,4 +55,7 @@ impl fmt::Display for FluxError {
     }
 }
 
-impl std::error::Error for FluxError {}
+impl std::error::Error for EzraError {}
+
+// Backward-compatible type alias so existing code referencing FluxError still compiles during migration
+pub type FluxError = EzraError;

@@ -1,0 +1,2 @@
+r is 1 + "2"
+assert r is "12", "number + text"

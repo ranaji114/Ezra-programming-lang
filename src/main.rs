@@ -4,10 +4,10 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process;
 
-use flux::formatter;
-use flux::interpreter::Interpreter;
-use flux::linter::{self, Severity};
-use flux::parser;
+use ezra::formatter;
+use ezra::fullvm::FastVM;
+use ezra::linter::{self, Severity};
+use ezra::parser;
 
 fn main() {
     if let Err(error) = run_cli() {
@@ -21,16 +21,15 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
 
     match args.get(1).map(String::as_str) {
         Some("run") => {
-            let path = args.get(2).map(String::as_str).unwrap_or("src/main.flux");
-
+            let path = args.get(2).map(String::as_str).unwrap_or("src/main.ez");
             let source = fs::read_to_string(path)?;
             let program = parser::parse(&source)?;
-            let mut interpreter = Interpreter::new();
-            interpreter.run(&program)?;
+            let mut vm = FastVM::new();
+            vm.compile_and_run(&program)?;
             Ok(())
         }
         Some("check") => {
-            let path = args.get(2).map(String::as_str).unwrap_or("src/main.flux");
+            let path = args.get(2).map(String::as_str).unwrap_or("src/main.ez");
             check_file(path)?;
             Ok(())
         }
@@ -63,13 +62,13 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
         Some("repl") => run_repl(),
         Some("new") => {
             let Some(name) = args.get(2) else {
-                return Err("usage: flux new <project-name>".into());
+                return Err("usage: ezra new <project-name>".into());
             };
             create_project(name)?;
             Ok(())
         }
         Some("--version") | Some("-V") => {
-            println!("flux 0.1.0");
+            println!("ezra 0.1.0");
             Ok(())
         }
         Some("--help") | Some("-h") | None => {
@@ -81,18 +80,18 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_help() {
-    println!("Flux 0.1.0");
+    println!("Ezra 0.1.0 — a readable scripting language");
     println!();
     println!("Usage:");
-    println!("  flux new <project-name>");
-    println!("  flux run [file.flux]");
-    println!("  flux check [file.flux]");
-    println!("  flux test [tests-dir-or-file]");
-    println!("  flux fmt [path] [--check]");
-    println!("  flux lint [path]");
-    println!("  flux build [project-dir]");
-    println!("  flux repl");
-    println!("  flux --version");
+    println!("  ezra new <project-name>");
+    println!("  ezra run [file.ez]");
+    println!("  ezra check [file.ez]");
+    println!("  ezra test [tests-dir-or-file]");
+    println!("  ezra fmt [path] [--check]");
+    println!("  ezra lint [path]");
+    println!("  ezra build [project-dir]");
+    println!("  ezra repl");
+    println!("  ezra --version");
 }
 
 fn check_file(path: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -105,19 +104,19 @@ fn check_file(path: &str) -> Result<(), Box<dyn std::error::Error>> {
 fn run_tests(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let test_files = collect_test_files(Path::new(path))?;
     if test_files.is_empty() {
-        return Err(format!("no .flux tests found in `{path}`").into());
+        return Err(format!("no .ez tests found in `{path}`").into());
     }
 
     let total = test_files.len();
     for file in &test_files {
         let source = fs::read_to_string(file)?;
         let program = parser::parse(&source)?;
-        let mut interpreter = Interpreter::new();
-        interpreter.run(&program)?;
+        let mut vm = FastVM::new();
+        vm.compile_and_run(&program)?;
         println!("test {} ... ok", file.display());
     }
 
-    println!("{total} Flux test(s) passed");
+    println!("{total} Ezra test(s) passed");
     Ok(())
 }
 
@@ -132,10 +131,10 @@ fn format_files(path: &str, check: bool) -> Result<(), Box<dyn std::error::Error
     }
 
     if check {
-        println!("Checked {} Flux file(s)", summary.checked);
+        println!("Checked {} Ezra file(s)", summary.checked);
     } else {
         println!(
-            "Formatted {} Flux file(s), changed {}",
+            "Formatted {} Ezra file(s), changed {}",
             summary.checked,
             summary.changed.len()
         );
@@ -154,7 +153,6 @@ fn lint_files(path: &str) -> Result<(), Box<dyn std::error::Error>> {
             Severity::Error => errors += 1,
             Severity::Warning => warnings += 1,
         }
-
         println!(
             "{}:{}:{}: {:?}: {}",
             message.path.display(),
@@ -166,17 +164,15 @@ fn lint_files(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("{errors} error(s), {warnings} warning(s)");
-
     if errors > 0 {
         return Err("lint failed".into());
     }
-
     Ok(())
 }
 
 fn build_project(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let root = Path::new(path);
-    let main_file = root.join("src").join("main.flux");
+    let main_file = root.join("src").join("main.ez");
 
     if !main_file.is_file() {
         return Err(format!("expected `{}`", main_file.display()).into());
@@ -193,7 +189,7 @@ fn build_project(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     fs::write(
         build_dir.join("manifest.txt"),
         format!(
-            "Flux build\nproject={}\nentry={}\nversion=0.1.0\n",
+            "Ezra build\nproject={}\nentry={}\nversion=0.1.0\n",
             root.display(),
             main_file.display()
         ),
@@ -208,14 +204,14 @@ fn build_project(path: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn run_repl() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Flux REPL 0.1.0");
+    println!("Ezra REPL 0.1.0");
     println!("Type `exit` or press Ctrl+C to quit.");
 
     let stdin = io::stdin();
-    let mut interpreter = Interpreter::new();
+    let mut vm = FastVM::new();
 
     loop {
-        print!("flux> ");
+        print!("ezra> ");
         io::stdout().flush()?;
 
         let mut line = String::new();
@@ -228,23 +224,19 @@ fn run_repl() -> Result<(), Box<dyn std::error::Error>> {
         if trimmed == "exit" || trimmed == "quit" {
             return Ok(());
         }
-
         if trimmed.is_empty() {
             continue;
         }
 
-        match parser::parse(&line).and_then(|program| interpreter.run(&program)) {
+        match parser::parse(&line).and_then(|program| vm.compile_and_run(&program)) {
             Ok(()) => {}
-            Err(error) => eprintln!("{error}"),
+            Err(err) => eprintln!("{err}"),
         }
     }
 }
 
 fn collect_test_files(path: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let all = formatter::collect_flux_files(path)?;
-    // When the path is a directory, only files whose stem ends with `_test`
-    // are treated as test files (e.g. main_test.flux).  When the caller
-    // explicitly points at a single file we always run it.
+    let all = formatter::collect_ezra_files(path)?;
     if path.is_dir() {
         Ok(all
             .into_iter()
@@ -272,23 +264,26 @@ fn create_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir_all(root.join("tests"))?;
 
     fs::write(
-        root.join("flux.toml"),
+        root.join("ezra.toml"),
         format!(
             "[package]\nname = \"{name}\"\nversion = \"0.1.0\"\nedition = \"2025\"\n\n[dependencies]\n"
         ),
     )?;
 
-    fs::write(root.join("src").join("main.flux"), "say \"Hello Flux\"\n")?;
+    fs::write(
+        root.join("src").join("main.ez"),
+        "say \"Hello from Ezra!\"\n",
+    )?;
 
     fs::write(
-        root.join("tests").join("main_test.flux"),
+        root.join("tests").join("main_test.ez"),
         "say \"Tests coming soon\"\n",
     )?;
 
-    println!("Created Flux project `{name}`");
+    println!("Created Ezra project `{name}`");
     println!("Next:");
     println!("  cd {name}");
-    println!("  flux run");
+    println!("  ezra run");
 
     Ok(())
 }
@@ -297,14 +292,11 @@ fn validate_project_name(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     if name.is_empty() {
         return Err("project name cannot be empty".into());
     }
-
     let valid = name
         .chars()
         .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_');
-
     if !valid {
         return Err("project name can only contain letters, numbers, `-`, and `_`".into());
     }
-
     Ok(())
 }

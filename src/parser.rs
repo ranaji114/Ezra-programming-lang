@@ -1,5 +1,5 @@
 use crate::ast::{BinaryOp, CompoundOp, Expr, Program, Stmt, UnaryOp};
-use crate::error::FluxError;
+use crate::error::EzraError as FluxError;
 use crate::lexer::lex_expression;
 use crate::token::{Token, TokenKind};
 
@@ -38,6 +38,12 @@ impl Parser {
                 ));
             }
             if line.text == "otherwise" || line.text.starts_with("otherwise if ") {
+                break;
+            }
+            if line.text == "catch" || line.text.starts_with("catch ") || line.text == "finally" {
+                break;
+            }
+            if line.text.starts_with("when ") {
                 break;
             }
 
@@ -158,6 +164,66 @@ impl Parser {
             return self.parse_function(indent, &line, rest);
         }
 
+        if line.text == "try" {
+            return self.parse_try(indent, &line);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("throw ") {
+            return Ok(Stmt::Throw(parse_expr(
+                rest,
+                line.line_number,
+                line.indent + 7,
+            )?));
+        }
+
+        if let Some(rest) = line.text.strip_prefix("use ") {
+            return self.parse_use(indent, &line, rest);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("export ") {
+            return self.parse_export(indent, &line, rest);
+        }
+
+        if line.text.starts_with("pick ") || line.text == "pick" {
+            return self.parse_pick(indent, &line);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("let ") {
+            return self.parse_let(indent, &line, rest);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("const ") {
+            return self.parse_const(indent, &line, rest);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("struct ") {
+            return self.parse_struct(indent, &line, rest);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("enum ") {
+            return self.parse_enum(indent, &line, rest);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("impl ") {
+            return self.parse_impl(indent, &line, rest);
+        }
+
+        if line.text == "loop" {
+            return self.parse_loop(indent, &line);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("while ") {
+            return self.parse_while(indent, &line, rest);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("until ") {
+            return self.parse_until(indent, &line, rest);
+        }
+
+        if let Some(rest) = line.text.strip_prefix("assert ") {
+            return self.parse_assert(indent, &line, rest);
+        }
+
         if let Some((name, op, expr)) = split_compound_assignment(&line.text) {
             validate_identifier(name, line.line_number, line.indent + 1)?;
             return Ok(Stmt::CompoundAssign {
@@ -221,7 +287,7 @@ impl Parser {
     ) -> Result<Stmt, FluxError> {
         let Some(count_text) = rest.strip_suffix(" times") else {
             return Err(FluxError::new(
-                "only `repeat N times` is implemented yet",
+                "only `repeat N times` is supported",
                 line.line_number,
                 line.indent + 1,
             ));
@@ -304,11 +370,335 @@ impl Parser {
         })
     }
 
+    fn parse_try(&mut self, indent: usize, line: &SourceLine) -> Result<Stmt, FluxError> {
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let body = self.parse_block(child_indent)?;
+        let mut catches = Vec::new();
+        let mut finally_body = None;
+
+        while let Some(next) = self.peek().cloned() {
+            if next.indent < indent {
+                break;
+            }
+            if next.indent == indent && next.text.starts_with("catch") {
+                self.advance();
+                let error_name = if next.text == "catch" {
+                    None
+                } else { next.text.strip_prefix("catch ").map(|name| name.to_string()) };
+                let catch_indent = self.required_child_indent(indent, next.line_number)?;
+                let catch_body = self.parse_block(catch_indent)?;
+                catches.push(crate::ast::CatchClause {
+                    error_name,
+                    body: catch_body,
+                });
+            } else if next.indent == indent && next.text == "finally" {
+                self.advance();
+                let finally_indent = self.required_child_indent(indent, next.line_number)?;
+                finally_body = Some(self.parse_block(finally_indent)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(Stmt::Try {
+            body,
+            catches,
+            finally_body,
+            line: line.line_number,
+        })
+    }
+
+    fn parse_use(
+        &mut self,
+        _indent: usize,
+        _line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let clean = |s: &str| -> String { s.trim().trim_matches('"').to_string() };
+
+        if let Some((path, names_str)) = rest.split_once(" use ") {
+            let path = clean(path);
+            let names: Vec<String> = names_str.split(',').map(&clean).collect();
+            return Ok(Stmt::UseFrom { path, names });
+        }
+
+        let parts: Vec<&str> = rest.split(" as ").collect();
+        let path = clean(parts[0]);
+        let alias = if parts.len() > 1 {
+            Some(clean(parts[1]))
+        } else {
+            None
+        };
+
+        Ok(Stmt::Use { path, alias })
+    }
+
+    fn parse_export(
+        &mut self,
+        _indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let name = rest.trim().to_string();
+        validate_identifier(&name, line.line_number, line.indent + 8)?;
+        Ok(Stmt::Export { name })
+    }
+
+    fn parse_pick(&mut self, indent: usize, line: &SourceLine) -> Result<Stmt, FluxError> {
+        let expression = if line.text == "pick" {
+            let expr_line = self.advance().clone();
+            parse_expr(&expr_line.text, expr_line.line_number, expr_line.indent + 1)?
+        } else {
+            let rest = line.text.strip_prefix("pick ").unwrap_or("");
+            parse_expr(rest, line.line_number, line.indent + 6)?
+        };
+
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let mut cases = Vec::new();
+        let mut else_case = None;
+
+        while let Some(next) = self.peek().cloned() {
+            if next.indent < child_indent {
+                break;
+            }
+            if next.indent == child_indent && next.text.starts_with("when ") {
+                self.advance();
+                let pattern_text = next.text.strip_prefix("when ").unwrap_or("");
+                let pattern = parse_expr(pattern_text, next.line_number, next.indent + 6)?;
+                let case_indent = self.required_child_indent(child_indent, next.line_number)?;
+                let body = self.parse_block(case_indent)?;
+                cases.push(crate::ast::PickCase { pattern, body });
+            } else if next.indent == child_indent && next.text == "otherwise" {
+                self.advance();
+                let else_indent = self.required_child_indent(child_indent, next.line_number)?;
+                else_case = Some(self.parse_block(else_indent)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(Stmt::Pick {
+            expression,
+            cases,
+            else_case,
+        })
+    }
+
+    fn parse_let(
+        &mut self,
+        _indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let (name, type_hint, expr_text) =
+            if let Some((name_part, expr_part)) = rest.split_once(" is ") {
+                let name = name_part.trim();
+                let (name, type_hint) = if let Some((n, t)) = name.split_once(": ") {
+                    (n.trim(), Some(t.trim().to_string()))
+                } else {
+                    (name, None)
+                };
+                (name.to_string(), type_hint, expr_part.trim())
+            } else {
+                return Err(FluxError::new(
+                    "expected `let name is value`",
+                    line.line_number,
+                    line.indent + 1,
+                ));
+            };
+
+        validate_identifier(&name, line.line_number, line.indent + 5)?;
+        let expr = parse_expr(expr_text, line.line_number, line.indent + name.len() + 6)?;
+        Ok(Stmt::Let {
+            name,
+            type_hint,
+            expr,
+        })
+    }
+
+    fn parse_const(
+        &mut self,
+        _indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let (name, type_hint, expr_text) =
+            if let Some((name_part, expr_part)) = rest.split_once(" is ") {
+                let name = name_part.trim();
+                let (name, type_hint) = if let Some((n, t)) = name.split_once(": ") {
+                    (n.trim(), Some(t.trim().to_string()))
+                } else {
+                    (name, None)
+                };
+                (name.to_string(), type_hint, expr_part.trim())
+            } else {
+                return Err(FluxError::new(
+                    "expected `const name is value`",
+                    line.line_number,
+                    line.indent + 1,
+                ));
+            };
+
+        validate_identifier(&name, line.line_number, line.indent + 7)?;
+        let expr = parse_expr(expr_text, line.line_number, line.indent + name.len() + 7)?;
+        Ok(Stmt::Const {
+            name,
+            type_hint,
+            expr,
+        })
+    }
+
+    fn parse_struct(
+        &mut self,
+        indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let name = rest.trim().to_string();
+        validate_identifier(&name, line.line_number, line.indent + 7)?;
+
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let mut fields = Vec::new();
+
+        while let Some(next) = self.peek().cloned() {
+            if next.indent < child_indent {
+                break;
+            }
+            if next.indent == child_indent {
+                self.advance();
+                let field = next.text.trim().to_string();
+                if !field.is_empty() {
+                    fields.push(field);
+                }
+            } else {
+                break;
+            }
+        }
+
+        Ok(Stmt::Struct { name, fields })
+    }
+
+    fn parse_enum(
+        &mut self,
+        indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let name = rest.trim().to_string();
+        validate_identifier(&name, line.line_number, line.indent + 5)?;
+
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let mut variants = Vec::new();
+
+        while let Some(next) = self.peek().cloned() {
+            if next.indent < child_indent {
+                break;
+            }
+            if next.indent == child_indent {
+                self.advance();
+                let variant = next.text.trim().to_string();
+                if !variant.is_empty() {
+                    variants.push(variant);
+                }
+            } else {
+                break;
+            }
+        }
+
+        Ok(Stmt::Enum { name, variants })
+    }
+
+    fn parse_impl(
+        &mut self,
+        indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let struct_name = rest.trim().to_string();
+        validate_identifier(&struct_name, line.line_number, line.indent + 5)?;
+
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let mut methods = Vec::new();
+
+        while let Some(next) = self.peek().cloned() {
+            if next.indent < child_indent {
+                break;
+            }
+            if next.indent == child_indent && next.text.starts_with("give ") {
+                methods.push(self.parse_statement(child_indent)?);
+            } else {
+                break;
+            }
+        }
+
+        Ok(Stmt::Impl {
+            struct_name,
+            methods,
+        })
+    }
+
+    fn parse_loop(&mut self, indent: usize, line: &SourceLine) -> Result<Stmt, FluxError> {
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let body = self.parse_block(child_indent)?;
+        Ok(Stmt::Loop { body })
+    }
+
+    fn parse_while(
+        &mut self,
+        indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let condition = parse_expr(rest, line.line_number, line.indent + 7)?;
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let body = self.parse_block(child_indent)?;
+        Ok(Stmt::While { condition, body })
+    }
+
+    fn parse_until(
+        &mut self,
+        indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let condition = parse_expr(rest, line.line_number, line.indent + 7)?;
+        let child_indent = self.required_child_indent(indent, line.line_number)?;
+        let body = self.parse_block(child_indent)?;
+        Ok(Stmt::Until { condition, body })
+    }
+
+    fn parse_assert(
+        &mut self,
+        _indent: usize,
+        line: &SourceLine,
+        rest: &str,
+    ) -> Result<Stmt, FluxError> {
+        let (condition_text, message_text) = if let Some((cond, msg)) = rest.split_once(", ") {
+            (cond.trim(), Some(msg.trim()))
+        } else {
+            (rest.trim(), None)
+        };
+
+        let condition = parse_expr(condition_text, line.line_number, line.indent + 8)?;
+        let message = if let Some(msg) = message_text {
+            Some(parse_expr(
+                msg,
+                line.line_number,
+                line.indent + 8 + condition_text.len() + 2,
+            )?)
+        } else {
+            None
+        };
+
+        Ok(Stmt::Assert { condition, message })
+    }
+
     fn required_child_indent(
         &self,
         parent_indent: usize,
         line_number: usize,
     ) -> Result<usize, FluxError> {
+        let _ = line_number;
         let Some(next) = self.peek() else {
             return Err(FluxError::new(
                 "expected indented block",
@@ -490,17 +880,137 @@ struct ExprParser {
 
 impl ExprParser {
     fn expression(&mut self) -> Result<Expr, FluxError> {
+        // Check for arrow function: `param -> body` or `(p1, p2) -> body`
+        // Lookahead: if we have Identifier Arrow, or LeftParen ... RightParen Arrow
+        if self.is_arrow_function() {
+            return self.parse_arrow_function();
+        }
         self.or()
     }
 
+    /// Returns true if the current token sequence looks like an arrow function.
+    fn is_arrow_function(&self) -> bool {
+        // Single-param: `ident ->`
+        if let TokenKind::Identifier(_) = &self.tokens[self.current].kind {
+            if let Some(next) = self.tokens.get(self.current + 1) {
+                return matches!(next.kind, TokenKind::Arrow);
+            }
+        }
+        // Multi-param: `( ident, ... ) ->`
+        if matches!(self.tokens[self.current].kind, TokenKind::LeftParen) {
+            // scan for matching ) then ->
+            let mut depth = 0;
+            let mut i = self.current;
+            while i < self.tokens.len() {
+                match &self.tokens[i].kind {
+                    TokenKind::LeftParen => depth += 1,
+                    TokenKind::RightParen => {
+                        depth -= 1;
+                        if depth == 0 {
+                            if let Some(after) = self.tokens.get(i + 1) {
+                                return matches!(after.kind, TokenKind::Arrow);
+                            }
+                            return false;
+                        }
+                    }
+                    TokenKind::Eof | TokenKind::Newline => return false,
+                    _ => {}
+                }
+                i += 1;
+            }
+        }
+        false
+    }
+
+    /// Parse `param -> body` or `(p1, p2) -> body` as an ArrowFunction.
+    fn parse_arrow_function(&mut self) -> Result<Expr, FluxError> {
+        let params = if matches!(self.tokens[self.current].kind, TokenKind::LeftParen) {
+            // consume `(`
+            self.current += 1;
+            let mut names = Vec::new();
+            while !matches!(self.tokens[self.current].kind, TokenKind::RightParen | TokenKind::Eof)
+            {
+                let t = self.advance().clone();
+                if let TokenKind::Identifier(name) = t.kind {
+                    names.push(name);
+                }
+                if matches!(self.tokens[self.current].kind, TokenKind::Comma) {
+                    self.current += 1;
+                }
+            }
+            // consume `)`
+            self.consume(|k| matches!(k, TokenKind::RightParen), "expected `)` in arrow function params")?;
+            names
+        } else {
+            // single identifier
+            let t = self.advance().clone();
+            match t.kind {
+                TokenKind::Identifier(name) => vec![name],
+                _ => return Err(FluxError::new("expected parameter name", t.line, t.column)),
+            }
+        };
+        // consume `->`
+        self.consume(|k| matches!(k, TokenKind::Arrow), "expected `->` in arrow function")?;
+        let body = self.expression()?;
+        Ok(Expr::ArrowFunction {
+            params,
+            body: Box::new(body),
+        })
+    }
+
     fn or(&mut self) -> Result<Expr, FluxError> {
-        let mut expr = self.and()?;
+        let mut expr = self.bitwise_or()?;
 
         while self.matches(|kind| matches!(kind, TokenKind::Or)) {
-            let right = self.and()?;
+            let right = self.bitwise_or()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 op: BinaryOp::Or,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn bitwise_or(&mut self) -> Result<Expr, FluxError> {
+        let mut expr = self.bitwise_xor()?;
+
+        while self.matches(|kind| matches!(kind, TokenKind::BitwiseOr)) {
+            let right = self.bitwise_xor()?;
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op: BinaryOp::BitwiseOr,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn bitwise_xor(&mut self) -> Result<Expr, FluxError> {
+        let mut expr = self.bitwise_and()?;
+
+        while self.matches(|kind| matches!(kind, TokenKind::BitwiseXor)) {
+            let right = self.bitwise_and()?;
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op: BinaryOp::BitwiseXor,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn bitwise_and(&mut self) -> Result<Expr, FluxError> {
+        let mut expr = self.and()?;
+
+        while self.matches(|kind| matches!(kind, TokenKind::BitwiseAnd)) {
+            let right = self.and()?;
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op: BinaryOp::BitwiseAnd,
                 right: Box::new(right),
             };
         }
@@ -557,7 +1067,7 @@ impl ExprParser {
     }
 
     fn comparison(&mut self) -> Result<Expr, FluxError> {
-        let mut expr = self.term()?;
+        let mut expr = self.shift()?;
 
         loop {
             let op = if self.matches(|kind| matches!(kind, TokenKind::Greater)) {
@@ -568,6 +1078,33 @@ impl ExprParser {
                 Some(BinaryOp::Less)
             } else if self.matches(|kind| matches!(kind, TokenKind::LessEqual)) {
                 Some(BinaryOp::LessEqual)
+            } else {
+                None
+            };
+
+            let Some(op) = op else {
+                break;
+            };
+
+            let right = self.shift()?;
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn shift(&mut self) -> Result<Expr, FluxError> {
+        let mut expr = self.term()?;
+
+        loop {
+            let op = if self.matches(|kind| matches!(kind, TokenKind::ShiftLeft)) {
+                Some(BinaryOp::ShiftLeft)
+            } else if self.matches(|kind| matches!(kind, TokenKind::ShiftRight)) {
+                Some(BinaryOp::ShiftRight)
             } else {
                 None
             };
@@ -615,7 +1152,7 @@ impl ExprParser {
     }
 
     fn factor(&mut self) -> Result<Expr, FluxError> {
-        let mut expr = self.unary()?;
+        let mut expr = self.power()?;
 
         loop {
             let op = if self.matches(|kind| matches!(kind, TokenKind::Star)) {
@@ -632,12 +1169,27 @@ impl ExprParser {
                 break;
             };
 
-            let right = self.unary()?;
+            let right = self.power()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 op,
                 right: Box::new(right),
             };
+        }
+
+        Ok(expr)
+    }
+
+    fn power(&mut self) -> Result<Expr, FluxError> {
+        let expr = self.unary()?;
+
+        if self.matches(|kind| matches!(kind, TokenKind::Power)) {
+            let right = self.power()?;
+            return Ok(Expr::Binary {
+                left: Box::new(expr),
+                op: BinaryOp::Power,
+                right: Box::new(right),
+            });
         }
 
         Ok(expr)
@@ -656,6 +1208,19 @@ impl ExprParser {
             let right = self.unary()?;
             return Ok(Expr::Unary {
                 op: UnaryOp::Negate,
+                right: Box::new(right),
+            });
+        }
+
+        if self.matches(|kind| matches!(kind, TokenKind::Plus)) {
+            let right = self.unary()?;
+            return Ok(right);
+        }
+
+        if self.matches(|kind| matches!(kind, TokenKind::BitwiseNot)) {
+            let right = self.unary()?;
+            return Ok(Expr::Unary {
+                op: UnaryOp::Not,
                 right: Box::new(right),
             });
         }
@@ -685,12 +1250,16 @@ impl ExprParser {
                 };
             } else if self.matches(|kind| matches!(kind, TokenKind::Dot)) {
                 let token = self.advance().clone();
-                let TokenKind::Identifier(name) = token.kind else {
-                    return Err(FluxError::new(
-                        "expected property name after `.`",
-                        token.line,
-                        token.column,
-                    ));
+                let name = match token.kind {
+                    TokenKind::Identifier(name) => name,
+                    TokenKind::Error => "error".to_string(),
+                    _ => {
+                        return Err(FluxError::new(
+                            "expected property name after `.`",
+                            token.line,
+                            token.column,
+                        ));
+                    }
                 };
                 expr = Expr::Property {
                     target: Box::new(expr),
@@ -708,7 +1277,14 @@ impl ExprParser {
         let token = self.advance().clone();
         match token.kind {
             TokenKind::Number(value) => Ok(Expr::Number(value)),
-            TokenKind::Text(value) => Ok(Expr::Text(value)),
+            TokenKind::Text(value) => {
+                // Parse string interpolation: "Hello {name}!" → InterpolatedText
+                if value.contains('{') {
+                    parse_interpolated_text(&value, token.line, token.column)
+                } else {
+                    Ok(Expr::Text(value))
+                }
+            }
             TokenKind::Yes => Ok(Expr::Bool(true)),
             TokenKind::No => Ok(Expr::Bool(false)),
             TokenKind::Nothing => Ok(Expr::Nothing),
@@ -720,7 +1296,26 @@ impl ExprParser {
                 let prompt = self.unary()?;
                 Ok(Expr::InputNumber(Box::new(prompt)))
             }
-            TokenKind::Identifier(name) => Ok(Expr::Variable(name)),
+            TokenKind::Identifier(name) if name == "size_of" => {
+                self.consume(|kind| matches!(kind, TokenKind::LeftParen), "expected `(`")?;
+                let expr = self.expression()?;
+                self.consume(|kind| matches!(kind, TokenKind::RightParen), "expected `)`")?;
+                Ok(Expr::SizeOf(Box::new(expr)))
+            }
+            TokenKind::Identifier(name) if name == "type_of" => {
+                self.consume(|kind| matches!(kind, TokenKind::LeftParen), "expected `(`")?;
+                let expr = self.expression()?;
+                self.consume(|kind| matches!(kind, TokenKind::RightParen), "expected `)`")?;
+                Ok(Expr::TypeOf(Box::new(expr)))
+            }
+            TokenKind::Identifier(name) => Ok(Expr::Variable {
+                name,
+                line: token.line,
+            }),
+            TokenKind::Error => Ok(Expr::Variable {
+                name: "error".to_string(),
+                line: token.line,
+            }),
             TokenKind::LeftParen => {
                 let expr = self.expression()?;
                 self.consume(|kind| matches!(kind, TokenKind::RightParen), "expected `)`")?;
@@ -862,4 +1457,119 @@ impl ExprParser {
 
 fn same_variant(a: &TokenKind, b: &TokenKind) -> bool {
     std::mem::discriminant(a) == std::mem::discriminant(b)
+}
+
+/// Parse a string literal that may contain `{expr}` interpolations.
+/// Returns `Expr::Text` if there are no valid interpolations, or
+/// `Expr::InterpolatedText` if there are one or more.
+fn parse_interpolated_text(
+    value: &str,
+    line: usize,
+    _column: usize,
+) -> Result<crate::ast::Expr, FluxError> {
+    use crate::ast::TextPart;
+
+    let chars: Vec<char> = value.chars().collect();
+    let mut parts: Vec<TextPart> = Vec::new();
+    let mut i = 0;
+    let mut current_lit = String::new();
+
+    while i < chars.len() {
+        if chars[i] == '{' {
+            // Check for escaped `{{`
+            if i + 1 < chars.len() && chars[i + 1] == '{' {
+                current_lit.push('{');
+                i += 2;
+                continue;
+            }
+            // Find matching `}`
+            let start = i + 1;
+            let mut end = start;
+            let mut depth = 1usize;
+            while end < chars.len() && depth > 0 {
+                if chars[end] == '{' {
+                    depth += 1;
+                }
+                if chars[end] == '}' {
+                    depth -= 1;
+                }
+                if depth > 0 {
+                    end += 1;
+                }
+            }
+            if depth != 0 {
+                // Unmatched brace — treat as literal.
+                current_lit.push(chars[i]);
+                i += 1;
+                continue;
+            }
+            // Push accumulated literal (may be empty).
+            if !current_lit.is_empty() {
+                parts.push(TextPart::Literal(current_lit.clone()));
+                current_lit.clear();
+            }
+            // Parse the inner expression.
+            let inner: String = chars[start..end].iter().collect();
+            let inner = inner.trim();
+            // Wrap as assignment so parse() can handle it.
+            let wrapped = format!("__ipl is {inner}");
+            match crate::parser::parse(&wrapped) {
+                Ok(prog) => {
+                    if let crate::ast::Stmt::Assign { expr, .. } = prog
+                        .statements
+                        .into_iter()
+                        .next()
+                        .unwrap_or(crate::ast::Stmt::Expr(crate::ast::Expr::Nothing))
+                    {
+                        parts.push(TextPart::Interpolation(expr));
+                    } else {
+                        // Fallback: try as bare expr
+                        match parse_expr(inner, line, 0) {
+                            Ok(e) => parts.push(TextPart::Interpolation(e)),
+                            Err(_) => {
+                                current_lit.push('{');
+                                current_lit.push_str(inner);
+                                current_lit.push('}');
+                            }
+                        }
+                    }
+                }
+                Err(_) => {
+                    // Not a valid expression — keep as literal.
+                    current_lit.push('{');
+                    current_lit.push_str(inner);
+                    current_lit.push('}');
+                }
+            }
+            i = end + 1;
+        } else if chars[i] == '}' && i + 1 < chars.len() && chars[i + 1] == '}' {
+            // Escaped `}}`
+            current_lit.push('}');
+            i += 2;
+        } else {
+            current_lit.push(chars[i]);
+            i += 1;
+        }
+    }
+
+    if !current_lit.is_empty() {
+        parts.push(TextPart::Literal(current_lit));
+    }
+
+    // If no interpolations found, return plain text.
+    let has_interp = parts
+        .iter()
+        .any(|p| matches!(p, TextPart::Interpolation(_)));
+    if !has_interp {
+        let text = parts
+            .into_iter()
+            .map(|p| match p {
+                TextPart::Literal(s) => s,
+                TextPart::Interpolation(_) => String::new(),
+            })
+            .collect();
+        return Ok(crate::ast::Expr::Text(text));
+    }
+
+    Ok(crate::ast::Expr::InterpolatedText(parts))
 }

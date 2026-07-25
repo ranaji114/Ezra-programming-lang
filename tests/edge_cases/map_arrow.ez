@@ -1,0 +1,4 @@
+nums is [1, 2, 3]
+doubled is nums.map(n -> n * 2)
+assert doubled[0] is 2, "first doubled"
+assert doubled[2] is 6, "last doubled"

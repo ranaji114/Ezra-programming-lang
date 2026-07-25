@@ -3,3 +3,7 @@
 node_modules/**
 .gitignore
 .gitattributes
+*.vsix
+CHANGELOG.md
+# Keep: extension.js, package.json, syntaxes/, snippets/, themes/,
+#        icons/, language-configuration/, README.md

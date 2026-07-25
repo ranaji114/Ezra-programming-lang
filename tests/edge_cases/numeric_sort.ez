@@ -1,0 +1,3 @@
+sorted is [10, 2, 30, 5].sort()
+assert sorted[0] is 2, "numeric sort"
+assert sorted[3] is 30

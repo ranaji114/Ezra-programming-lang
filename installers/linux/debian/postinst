@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+# Register .ez MIME type
+if command -v update-mime-database >/dev/null 2>&1; then
+    mkdir -p /usr/share/mime/packages
+    cat > /usr/share/mime/packages/ezra.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="text/x-ezra">
+    <comment>Ezra source file</comment>
+    <glob pattern="*.ez"/>
+    <glob pattern="*.flx"/>
+  </mime-type>
+</mime-info>
+EOF
+    update-mime-database /usr/share/mime >/dev/null 2>&1 || true
+fi
+
+echo ""
+echo "Ezra 1.0.0 installed."
+echo "Created by Ankur Rana — https://github.com/ranaji114"
+echo ""
+echo "Quick start:"
+echo "  ezra --version"
+echo "  ezra new hello_app && cd hello_app && ezra run"
+echo ""

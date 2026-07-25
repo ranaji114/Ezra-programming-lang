@@ -1,0 +1,94 @@
+# Advanced Ezra Features Test
+
+say "=== Error Handling ==="
+try
+  result is 10 / 0
+  say "This should not print"
+catch error
+  say "Caught error: {error}"
+finally
+  say "Finally block executed"
+
+say ""
+say "=== Pattern Matching ==="
+day is "monday"
+pick day
+  when "monday"
+    say "Start of work week"
+  when "friday"
+    say "Almost weekend!"
+  otherwise
+    say "Regular day"
+
+say ""
+say "=== Advanced Operators ==="
+x is 2 ** 3
+say "Power: {x}"
+
+say ""
+say "=== Loop Constructs ==="
+i is 0
+while i < 5
+  say "While: {i}"
+  i += 1
+
+j is 0
+until j >= 5
+  say "Until: {j}"
+  j += 1
+
+say ""
+say "=== Assert ==="
+age is 25
+assert age >= 18, "Age must be at least 18"
+say "Age assertion passed"
+
+say ""
+say "=== Type Hints ==="
+let name: text is "Ezra"
+let count: number is 42
+const PI: number is 3.14159
+say "Name: {name}, Count: {count}, PI: {PI}"
+
+say ""
+say "=== String Methods ==="
+text is "Hello, World!"
+upper is text.upper()
+say "Upper: {upper}"
+lower is text.lower()
+say "Lower: {lower}"
+
+say ""
+say "=== List Methods ==="
+numbers is [5, 3, 1, 4, 2]
+sorted is numbers.sort()
+say "Sorted: {sorted}"
+reversed is numbers.reverse()
+say "Reversed: {reversed}"
+s is numbers.sum()
+say "Sum: {s}"
+a is numbers.avg()
+say "Avg: {a}"
+
+say ""
+say "=== Built-in Functions ==="
+say "abs(-5): {abs(-5)}"
+say "sqrt(16): {sqrt(16)}"
+say "floor(3.7): {floor(3.7)}"
+say "ceil(3.2): {ceil(3.2)}"
+say "round(3.5): {round(3.5)}"
+say "min(10, 5): {min(10, 5)}"
+say "max(10, 5): {max(10, 5)}"
+say "pow(2, 10): {pow(2, 10)}"
+say "range(5): {range(5)}"
+
+say ""
+say "=== Object Methods ==="
+person is {name: "Alice", age: 30, city: "NYC"}
+k is person.keys()
+say "Keys: {k}"
+v is person.values()
+say "Values: {v}"
+
+say ""
+say "All advanced features working!"

@@ -1,0 +1,3 @@
+x is nothing
+r is x is not nothing and x is 42
+assert r is no, "short-circuit and"

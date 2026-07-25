@@ -1,4 +1,4 @@
-use crate::error::FluxError;
+use crate::error::EzraError as FluxError;
 use crate::token::{Token, TokenKind};
 
 pub fn lex_expression(
@@ -54,7 +54,9 @@ impl Lexer {
                     self.add(kind, start);
                 }
                 '-' => {
-                    let kind = if self.match_char('=') {
+                    let kind = if self.match_char('>') {
+                        TokenKind::Arrow
+                    } else if self.match_char('=') {
                         TokenKind::MinusEqual
                     } else {
                         TokenKind::Minus
@@ -62,7 +64,9 @@ impl Lexer {
                     self.add(kind, start);
                 }
                 '*' => {
-                    let kind = if self.match_char('=') {
+                    let kind = if self.match_char('*') {
+                        TokenKind::Power
+                    } else if self.match_char('=') {
                         TokenKind::StarEqual
                     } else {
                         TokenKind::Star
@@ -70,6 +74,25 @@ impl Lexer {
                     self.add(kind, start);
                 }
                 '%' => self.add(TokenKind::Percent, start),
+                '|' => {
+                    if self.match_char('>') {
+                        self.add(TokenKind::Pipe, start);
+                    } else if self.match_char('|') {
+                        self.add(TokenKind::Or, start);
+                    } else {
+                        self.add(TokenKind::BitwiseOr, start);
+                    }
+                }
+                '&' => {
+                    if self.match_char('&') {
+                        self.add(TokenKind::And, start);
+                    } else {
+                        self.add(TokenKind::BitwiseAnd, start);
+                    }
+                }
+                '^' => self.add(TokenKind::BitwiseXor, start),
+                '~' => self.add(TokenKind::BitwiseNot, start),
+                '?' => self.add(TokenKind::Question, start),
                 '/' => {
                     if self.match_char('/') {
                         break;
@@ -80,7 +103,9 @@ impl Lexer {
                     }
                 }
                 '>' => {
-                    let kind = if self.match_char('=') {
+                    let kind = if self.match_char('>') {
+                        TokenKind::ShiftRight
+                    } else if self.match_char('=') {
                         TokenKind::GreaterEqual
                     } else {
                         TokenKind::Greater
@@ -88,7 +113,9 @@ impl Lexer {
                     self.add(kind, start);
                 }
                 '<' => {
-                    let kind = if self.match_char('=') {
+                    let kind = if self.match_char('<') {
+                        TokenKind::ShiftLeft
+                    } else if self.match_char('=') {
                         TokenKind::LessEqual
                     } else {
                         TokenKind::Less
@@ -100,7 +127,7 @@ impl Lexer {
                         self.add(TokenKind::EqualEqual, start);
                     } else {
                         return Err(self.error(
-                            "single `=` is not used in Flux yet; use `is` for assignment/equality",
+                            "single `=` is not supported; use `is` for assignment/equality",
                             start,
                         ));
                     }
@@ -190,6 +217,52 @@ impl Lexer {
             "not" => TokenKind::Not,
             "and" => TokenKind::And,
             "or" => TokenKind::Or,
+            "check" => TokenKind::Check,
+            "otherwise" => TokenKind::Otherwise,
+            "repeat" => TokenKind::Repeat,
+            "times" => TokenKind::Times,
+            "for" => TokenKind::For,
+            "each" => TokenKind::Each,
+            "in" => TokenKind::In,
+            "give" => TokenKind::Give,
+            "return" => TokenKind::Return,
+            "break" => TokenKind::Break,
+            "next" => TokenKind::Next,
+            "try" => TokenKind::Try,
+            "catch" => TokenKind::Catch,
+            "finally" => TokenKind::Finally,
+            "throw" => TokenKind::Throw,
+            "error" => TokenKind::Error,
+            "use" => TokenKind::Use,
+            "as" => TokenKind::As,
+            "from" => TokenKind::From,
+            "export" => TokenKind::Export,
+            "module" => TokenKind::Module,
+            "pick" => TokenKind::Pick,
+            "when" => TokenKind::When,
+            "match" => TokenKind::Match,
+            "let" => TokenKind::Let,
+            "const" => TokenKind::Const,
+            "type" => TokenKind::Type,
+            "struct" => TokenKind::Struct,
+            "enum" => TokenKind::Enum,
+            "impl" => TokenKind::Impl,
+            "self" => TokenKind::Self_,
+            "new" => TokenKind::New,
+            "pub" => TokenKind::Pub,
+            "priv" => TokenKind::Priv,
+            "async" => TokenKind::Async,
+            "await" => TokenKind::Await,
+            "fn" => TokenKind::Fn,
+            "loop" => TokenKind::Loop,
+            "while" => TokenKind::While,
+            "until" => TokenKind::Until,
+            "do" => TokenKind::Do,
+            "end" => TokenKind::End,
+            "with" => TokenKind::With,
+            "without" => TokenKind::Without,
+            "assert" => TokenKind::Assert,
+            "test" => TokenKind::Test,
             _ => TokenKind::Identifier(raw),
         };
         self.add(kind, start);

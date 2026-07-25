@@ -1,0 +1,5 @@
+give countdown(n)
+  check if n is 0
+    -> 0
+  -> countdown(n - 1) + 1
+assert countdown(400) is 400, "depth 400"

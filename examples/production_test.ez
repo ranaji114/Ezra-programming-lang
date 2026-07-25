@@ -1,0 +1,132 @@
+# Ezra Full Production Features Test
+
+say "========================================"
+say "     EZRA PRODUCTION FEATURES TEST"
+say "========================================"
+
+say ""
+say "=== 1. ERROR HANDLING ==="
+try
+  result is 10 / 0
+  say "FAIL: should have thrown"
+catch error
+  say "OK: caught divide by zero: {error}"
+finally
+  say "OK: finally block executed"
+
+try
+  throw "custom error message"
+catch err
+  say "OK: caught custom throw: {err}"
+
+say ""
+say "=== 2. BITWISE OPERATORS ==="
+a is 12 & 10
+say "OK: 12 & 10 = {a}"
+
+b is 12 | 10
+say "OK: 12 | 10 = {b}"
+
+c is 12 ^ 10
+say "OK: 12 ^ 10 = {c}"
+
+d is 8 << 2
+say "OK: 8 << 2 = {d}"
+
+e is 16 >> 2
+say "OK: 16 >> 2 = {e}"
+
+say ""
+say "=== 3. CONST IMMUTABILITY ==="
+const MAX is 100
+say "OK: const MAX = {MAX}"
+
+say ""
+say "=== 4. FILE I/O ==="
+write_file("test_ezra_output.txt", "Hello from Ezra!")
+say "OK: wrote file"
+content is read_file("test_ezra_output.txt")
+say "OK: read file: {content}"
+
+exists is file_exists("test_ezra_output.txt")
+say "OK: file exists: {exists}"
+
+append_file("test_ezra_output.txt", " Appended!")
+content2 is read_file("test_ezra_output.txt")
+say "OK: appended: {content2}"
+
+fsize is file_size("test_ezra_output.txt")
+say "OK: file size: {fsize}"
+
+create_dir("test_ezra_dir")
+say "OK: created directory"
+
+listing is list_dir(".")
+say "OK: listed directory (items: {len(listing)})"
+
+file_copy("test_ezra_output.txt", "test_ezra_copy.txt")
+say "OK: copied file"
+
+say ""
+say "=== 5. JSON ==="
+json_str is stringify_json({name: "Ezra", version: 1.0, features: ["parse", "stringify"]})
+say "OK: stringify_json: {json_str}"
+
+parsed is parse_json(json_str)
+say "OK: parsed JSON: {parsed}"
+
+arr is parse_json("[1, 2, 3, 4, 5]")
+say "OK: parsed JSON array: {arr}"
+
+say ""
+say "=== 6. MATH FUNCTIONS ==="
+say "OK: sin(0) = {sin(0)}"
+say "OK: cos(0) = {cos(0)}"
+say "OK: exp(1) = {exp(1)}"
+say "OK: log10(100) = {log10(100)}"
+
+say ""
+say "=== 7. DATE/TIME ==="
+now is date_now()
+say "OK: current time unix: {now.unix}"
+
+say ""
+say "=== 8. OS FUNCTIONS ==="
+current_dir is cwd()
+say "OK: current directory: {current_dir}"
+
+say ""
+say "=== 9. TYPE CHECKS ==="
+say "OK: is_number(42) = {is_number(42)}"
+say "OK: is_bool(yes) = {is_bool(yes)}"
+say "OK: is_list([1,2]) = {is_list([1, 2])}"
+say "OK: is_nothing(nothing) = {is_nothing(nothing)}"
+
+say ""
+say "=== 10. OPERATOR PRECEDENCE ==="
+x is 10 + 4 * 2
+say "OK: 10 + 4 * 2 = {x}"
+
+y is (10 + 4) * 2
+say "OK: (10 + 4) * 2 = {y}"
+
+z is 2 ** 8
+say "OK: 2 ** 8 = {z}"
+
+say ""
+say "=== 11. LET AND CONST ==="
+let mutable is 5
+mutable is 10
+say "OK: mutable = {mutable}"
+
+const IMMUTABLE is 50
+say "OK: const IMMUTABLE = {IMMUTABLE}"
+
+say ""
+say "========================================"
+say "     ALL PRODUCTION FEATURES PASSED!"
+say "========================================"
+
+# Cleanup
+file_delete("test_ezra_output.txt")
+file_delete("test_ezra_copy.txt")

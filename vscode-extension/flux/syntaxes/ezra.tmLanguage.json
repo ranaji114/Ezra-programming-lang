@@ -1,0 +1,405 @@
+{
+  "name": "Ezra",
+  "scopeName": "source.ezra",
+  "fileTypes": ["ez", "ar", "flx"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#function-definition" },
+    { "include": "#type-definition" },
+    { "include": "#control-flow" },
+    { "include": "#error-handling" },
+    { "include": "#module-keywords" },
+    { "include": "#declaration-keywords" },
+    { "include": "#loop-keywords" },
+    { "include": "#logical-keywords" },
+    { "include": "#builtin-functions" },
+    { "include": "#constants" },
+    { "include": "#numbers" },
+    { "include": "#object-keys" },
+    { "include": "#lhs-assignment" },
+    { "include": "#method-calls" },
+    { "include": "#function-calls" },
+    { "include": "#operators" },
+    { "include": "#punctuation" },
+    { "include": "#variables" }
+  ],
+  "repository": {
+
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.ezra",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.line.double-slash.ezra",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.ezra",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "patterns": [{ "include": "#comments" }]
+        }
+      ]
+    },
+
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ezra",
+          "begin": "\"",
+          "end": "\"",
+          "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.ezra" } },
+          "endCaptures":   { "0": { "name": "punctuation.definition.string.end.ezra" } },
+          "patterns": [
+            { "include": "#string-escape" },
+            { "include": "#string-interpolation" }
+          ]
+        }
+      ]
+    },
+
+    "string-escape": {
+      "name": "constant.character.escape.ezra",
+      "match": "\\\\(n|t|r|\"|'|\\\\|u\\{[0-9a-fA-F]+\\}|u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|.)"
+    },
+
+    "string-interpolation": {
+      "name": "meta.interpolation.ezra",
+      "begin": "\\{",
+      "end": "\\}",
+      "beginCaptures": { "0": { "name": "punctuation.section.interpolation.begin.ezra" } },
+      "endCaptures":   { "0": { "name": "punctuation.section.interpolation.end.ezra" } },
+      "contentName": "source.ezra.embedded",
+      "patterns": [
+        { "include": "#builtin-functions" },
+        { "include": "#constants" },
+        { "include": "#numbers" },
+        { "include": "#method-calls" },
+        { "include": "#function-calls" },
+        { "include": "#logical-keywords" },
+        { "include": "#operators" },
+        { "include": "#variables" }
+      ]
+    },
+
+    "function-definition": {
+      "patterns": [
+        {
+          "name": "meta.function.definition.ezra",
+          "match": "^(\\s*)(give)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\()([^)]*)(\\))",
+          "captures": {
+            "2": { "name": "keyword.declaration.function.ezra" },
+            "3": { "name": "entity.name.function.ezra" },
+            "4": { "name": "punctuation.definition.parameters.begin.ezra" },
+            "5": {
+              "patterns": [
+                {
+                  "name": "variable.parameter.ezra",
+                  "match": "[a-zA-Z_][a-zA-Z0-9_]*"
+                },
+                {
+                  "name": "punctuation.separator.parameter.ezra",
+                  "match": ","
+                }
+              ]
+            },
+            "6": { "name": "punctuation.definition.parameters.end.ezra" }
+          }
+        }
+      ]
+    },
+
+    "type-definition": {
+      "patterns": [
+        {
+          "name": "meta.struct.definition.ezra",
+          "match": "^\\s*(struct)\\s+([A-Z][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.struct.ezra" },
+            "2": { "name": "entity.name.type.struct.ezra" }
+          }
+        },
+        {
+          "name": "meta.enum.definition.ezra",
+          "match": "^\\s*(enum)\\s+([A-Z][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.enum.ezra" },
+            "2": { "name": "entity.name.type.enum.ezra" }
+          }
+        },
+        {
+          "name": "meta.impl.definition.ezra",
+          "match": "^\\s*(impl)\\s+([A-Z][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.impl.ezra" },
+            "2": { "name": "entity.name.type.ezra" }
+          }
+        }
+      ]
+    },
+
+    "control-flow": {
+      "patterns": [
+        {
+          "name": "keyword.control.conditional.ezra",
+          "match": "\\b(check if|otherwise if|otherwise|check)\\b"
+        },
+        {
+          "name": "keyword.control.loop.ezra",
+          "match": "\\b(for each|repeat|times|while|until|loop|break|next)\\b"
+        },
+        {
+          "name": "keyword.control.flow.ezra",
+          "match": "\\b(return|give|->)\\b"
+        },
+        {
+          "name": "keyword.control.match.ezra",
+          "match": "\\b(pick|when)\\b"
+        }
+      ]
+    },
+
+    "error-handling": {
+      "patterns": [
+        {
+          "name": "keyword.control.exception.ezra",
+          "match": "\\b(try|catch|finally|throw|assert)\\b"
+        }
+      ]
+    },
+
+    "module-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.other.module.ezra",
+          "match": "\\b(use|from|export|module|as|in)\\b"
+        }
+      ]
+    },
+
+    "declaration-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.declaration.variable.ezra",
+          "match": "\\b(let|const)\\b"
+        },
+        {
+          "name": "keyword.other.self.ezra",
+          "match": "\\b(self)\\b"
+        },
+        {
+          "name": "keyword.other.new.ezra",
+          "match": "\\b(new)\\b"
+        }
+      ]
+    },
+
+    "loop-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.loop.each.ezra",
+          "match": "\\b(each|in|times)\\b"
+        }
+      ]
+    },
+
+    "logical-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.operator.logical.ezra",
+          "match": "\\b(and|or|not)\\b"
+        },
+        {
+          "name": "keyword.operator.comparison.word.ezra",
+          "match": "\\bis not\\b"
+        },
+        {
+          "name": "keyword.operator.assignment.word.ezra",
+          "match": "\\bis\\b"
+        }
+      ]
+    },
+
+    "builtin-functions": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.output.ezra",
+          "match": "\\b(say|write|print|warn|fail|debug|clear|exit)\\b"
+        },
+        {
+          "name": "support.function.builtin.input.ezra",
+          "match": "\\b(input|input_number)\\b"
+        },
+        {
+          "name": "support.function.builtin.type.ezra",
+          "match": "\\b(len|type_of|text|number|bool|size_of)\\b"
+        },
+        {
+          "name": "support.function.builtin.math.ezra",
+          "match": "\\b(abs|sqrt|floor|ceil|round|min|max|pow|sin|cos|tan|log|log10|exp)\\b"
+        },
+        {
+          "name": "support.function.builtin.collection.ezra",
+          "match": "\\b(range|keys|values|has|map|filter|reduce|sort|reverse|contains|join|split)\\b"
+        },
+        {
+          "name": "support.function.builtin.io.ezra",
+          "match": "\\b(read_file|write_file|append_file|file_exists|file_delete|file_copy|file_size|list_dir|create_dir)\\b"
+        },
+        {
+          "name": "support.function.builtin.json.ezra",
+          "match": "\\b(parse_json|stringify_json)\\b"
+        },
+        {
+          "name": "support.function.builtin.os.ezra",
+          "match": "\\b(cwd|env|args|sleep|time|random|random_int|date_now)\\b"
+        },
+        {
+          "name": "support.function.builtin.type-check.ezra",
+          "match": "\\b(is_number|is_text|is_bool|is_list|is_object|is_function|is_nothing)\\b"
+        }
+      ]
+    },
+
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.true.ezra",
+          "match": "\\byes\\b"
+        },
+        {
+          "name": "constant.language.boolean.false.ezra",
+          "match": "\\bno\\b"
+        },
+        {
+          "name": "constant.language.null.ezra",
+          "match": "\\bnothing\\b"
+        }
+      ]
+    },
+
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.ezra",
+          "match": "(?<![\\w.])\\d+\\.\\d+([eE][+-]?\\d+)?(?![\\w.])"
+        },
+        {
+          "name": "constant.numeric.integer.ezra",
+          "match": "(?<![\\w.])\\d+(?![\\w.])"
+        }
+      ]
+    },
+
+    "object-keys": {
+      "patterns": [
+        {
+          "name": "meta.object.member.key.ezra",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*:(?!:))"
+        }
+      ]
+    },
+
+    "lhs-assignment": {
+      "patterns": [
+        {
+          "name": "variable.other.assignment.lhs.ezra",
+          "match": "^\\s*([a-z_][a-zA-Z0-9_]*)(?=\\s+(?:is\\b|\\+=|-=|\\*=|/=|%=))"
+        }
+      ]
+    },
+
+    "method-calls": {
+      "patterns": [
+        {
+          "name": "entity.name.function.method.ezra",
+          "match": "(?<=\\.)(upper|lower|trim|split|join|replace|find|contains|starts_with|ends_with|repeat|chars|to_number|is_empty|reverse|push|pop|shift|sort|take|drop|first|last|sum|avg|mean|min|max|map|filter|reduce|flat_map|any|all|count|zip|chunk|keys|values|has|get|set|delete|length|len)(?=\\s*\\(|\\b)"
+        }
+      ]
+    },
+
+    "function-calls": {
+      "patterns": [
+        {
+          "name": "entity.name.function.call.ezra",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()"
+        }
+      ]
+    },
+
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.ezra",
+          "match": ">=|<=|==|!=|>|<"
+        },
+        {
+          "name": "keyword.operator.compound-assignment.ezra",
+          "match": "\\+=|-=|\\*=|/=|%="
+        },
+        {
+          "name": "keyword.operator.arithmetic.ezra",
+          "match": "\\*\\*|\\+|-(?!>)|\\*|/|%"
+        },
+        {
+          "name": "keyword.operator.arrow.ezra",
+          "match": "->"
+        },
+        {
+          "name": "keyword.operator.pipe.ezra",
+          "match": "\\|>"
+        },
+        {
+          "name": "keyword.operator.bitwise.ezra",
+          "match": "<<|>>|&(?!&)|\\|(?!>)|\\^|~"
+        },
+        {
+          "name": "keyword.operator.ternary.ezra",
+          "match": "\\?(?!\\.)(?!\\.)"
+        },
+        {
+          "name": "keyword.operator.optional-chain.ezra",
+          "match": "\\?\\."
+        },
+        {
+          "name": "keyword.operator.spread.ezra",
+          "match": "\\.{3}"
+        }
+      ]
+    },
+
+    "punctuation": {
+      "patterns": [
+        { "name": "punctuation.separator.comma.ezra",     "match": "," },
+        { "name": "punctuation.accessor.dot.ezra",        "match": "(?<!\\.)\\.(?!\\.)" },
+        { "name": "punctuation.separator.colon.ezra",     "match": ":" },
+        { "name": "punctuation.bracket.square.open.ezra", "match": "\\[" },
+        { "name": "punctuation.bracket.square.close.ezra","match": "\\]" },
+        { "name": "punctuation.bracket.paren.open.ezra",  "match": "\\(" },
+        { "name": "punctuation.bracket.paren.close.ezra", "match": "\\)" },
+        { "name": "punctuation.bracket.brace.open.ezra",  "match": "\\{" },
+        { "name": "punctuation.bracket.brace.close.ezra", "match": "\\}" }
+      ]
+    },
+
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.language.self.ezra",
+          "match": "\\bself\\b"
+        },
+        {
+          "name": "entity.name.type.ezra",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        },
+        {
+          "name": "variable.other.readwrite.ezra",
+          "match": "\\b[a-z_][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+﻿empty is []
+assert len(empty) is 0
+assert empty.is_empty()
+assert empty.first() is nothing
+assert empty.last() is nothing
+# filter/map on empty list
+result is empty.filter(x -> yes)
+assert len(result) is 0
+result2 is empty.map(x -> x)
+assert len(result2) is 0

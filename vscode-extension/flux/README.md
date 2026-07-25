@@ -1,139 +1,165 @@
-# Flux Language Support for VS Code
+# Ezra Language — VS Code Extension
 
-**Created by [Ankur Rana](https://github.com/ranaji114)**
+**Author:** Ankur Rana  
+**Version:** 1.0.0  
+**Marketplace:** [ankur-rana.ezra-lang](https://marketplace.visualstudio.com/items?itemName=ankur-rana.ezra-lang)
 
-Syntax highlighting, snippets, commands, and integrated run support for the
-[Flux programming language](https://github.com/ranaji114/Flux-programming-lang) —
-a readable, indentation-based scripting language built in Rust.
-
-```flux
-name is input "Enter your name: "
-age is input_number "Enter your age: "
-
-check if age >= 18
-  say "Hello {name}, you are an adult."
-otherwise
-  say "Hello {name}, you are a minor."
-```
-
----
-
-## Step 1 — Install the Flux Interpreter
-
-The extension needs the `flux` executable to run, check, lint, and format files.
-
-### Windows
-
-1. Go to the [latest release](https://github.com/ranaji114/Flux-programming-lang/releases/latest)
-2. Download **`flux-windows-x86_64.zip`**
-3. Extract it — you'll find `flux.exe` inside
-4. Move `flux.exe` to a folder like `C:\Users\YourName\AppData\Local\Flux\bin\`
-5. Add that folder to your **PATH** (System → Advanced → Environment Variables)
-6. Open a new terminal and run: `flux --version`
-
-Or run the one-line installer in PowerShell:
-
-```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/ranaji114/Flux-programming-lang/main/install/install.ps1 | iex"
-```
-
-### Linux / macOS
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/ranaji114/Flux-programming-lang/main/install/install.sh | sh
-```
-
----
-
-## Step 2 — Write and Run Flux Code
-
-Open any `.flux` file. The extension activates automatically.
-
-**Run options:**
-
-| Method | Action |
-|--------|--------|
-| ▶ Button (editor title) | Run current file |
-| `Ctrl+R` / `Cmd+R` | Run current file |
-| `F5` | Run current file |
-| Command Palette → **Flux: Run File** | Run current file |
-
-Output appears in the **Flux** output panel.
+Ezra is a readable, indentation-based scripting language built in Rust.
+This extension brings full IDE support to VS Code.
 
 ---
 
 ## Features
 
-- **Language detection** for `.flux` and `.flx` files
-- **Syntax highlighting** for keywords, strings, numbers, operators, and comments
-- **Snippets** for common patterns (`check if`, `give`, `repeat`, `for each`, etc.)
-- **Run, Check, Lint, Format** commands via Command Palette or keyboard
-- **REPL** — open an interactive Flux session in the integrated terminal
-- **New Project** — scaffold a new Flux project from inside VS Code
-- **Flux Neon** dark color theme optimized for Flux syntax
+### Syntax Highlighting
+
+Full token-level colouring for all Ezra constructs:
+
+- Keywords: `check if`, `otherwise`, `repeat`, `for each`, `give`, `try`, `pick`, …
+- Built-in functions: `say`, `input`, `len`, `range`, `read_file`, `parse_json`, …
+- String interpolation: `"Hello {name}"` — the `{…}` part is highlighted separately
+- Method calls: `.filter()`, `.map()`, `.sort()`, `.upper()`, …
+- Type names, constants (`yes`, `no`, `nothing`), operators, numbers
+
+### Ezra Neon Theme
+
+A purpose-built dark theme with vivid neon accents tuned for Ezra syntax.
+Select it via **Preferences → Color Theme → Ezra Neon**.
+
+### Snippets
+
+30+ snippets for common patterns. Trigger with Tab after typing the prefix:
+
+| Prefix | Inserts |
+|---|---|
+| `hello` | Hello World |
+| `say` | `say "..."` |
+| `check` | if block |
+| `checkotherwise` | if / else |
+| `checkchain` | if / else-if / else |
+| `repeat` | repeat N times |
+| `foreach` | for each loop |
+| `while` | while loop with counter |
+| `give` | function definition |
+| `lambda` | arrow function |
+| `filter` | `.filter(n -> ...)` |
+| `map` | `.map(n -> ...)` |
+| `reduce` | `.reduce((acc,n) -> ...)` |
+| `trycatch` | try / catch |
+| `pick` | pattern match |
+| `json` | JSON round-trip |
+| `fib` | Fibonacci function |
+| `calculator` | Complete calculator example |
+
+### Run, Check, Lint, Format
+
+| Command | Shortcut | Description |
+|---|---|---|
+| Ezra: Run File | `Ctrl+R` / `F5` | Run the active `.ez` file |
+| Ezra: Stop Running | — | Kill the running process |
+| Ezra: Check Syntax | `Ctrl+Shift+K` | Parse without running |
+| Ezra: Lint File | — | Report style warnings |
+| Ezra: Format File | — | Auto-format the file |
+| Ezra: Open REPL | `Ctrl+Shift+R` | Open interactive shell |
+| Ezra: New Project | — | Scaffold a new project |
+
+Output appears in the **Ezra** output panel.
+
+### Language Server (LSP)
+
+When `ezra-lsp` is on your PATH (it ships alongside `ezra`):
+
+- **Diagnostics** — syntax errors underlined in red as you type
+- **Auto-completions** — keywords, builtins, snippets
+- **Hover tooltips** — function descriptions on hover
+- **Document symbols** — functions and variables in the Outline panel
+
+### File Associations
+
+Activates for `.ez`, `.ar`, and `.flx` files.
 
 ---
 
-## Commands
+## Installation
 
-| Command | Description |
-|---------|-------------|
-| **Flux: Run File** | Run the active `.flux` file |
-| **Flux: Check Syntax** | Check for syntax errors |
-| **Flux: Lint File** | Run the linter on the active file |
-| **Flux: Format File** | Auto-format the active file |
-| **Flux: Open REPL** | Open an interactive Flux REPL |
-| **Flux: New Project** | Scaffold a new Flux project |
+### From the Marketplace
+
+Search for **Ezra Language** in the VS Code Extensions view (`Ctrl+Shift+X`).
+
+### From VSIX
+
+1. Download `ezra-lang-1.0.0.vsix` from the [GitHub releases page](https://github.com/ranaji114/Flux-programming-lang/releases).
+2. Open VS Code → Extensions (`Ctrl+Shift+X`).
+3. Click **···** → **Install from VSIX…**
+4. Select the downloaded file and reload.
+
+### Build from Source
+
+```bash
+cd vscode-extension/flux
+npm install
+npm run package          # produces ezra-lang-1.0.0.vsix
+code --install-extension ezra-lang-1.0.0.vsix
+```
 
 ---
 
-## Keyboard Shortcuts
+## Requirements
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+R` / `Cmd+R` | Run the current Flux file |
-| `F5` | Run the current Flux file |
-| `Ctrl+Shift+R` / `Cmd+Shift+R` | Open the Flux REPL |
+- VS Code 1.75.0 or later.
+- The `ezra` binary on your PATH (or set `ezra.executablePath` in settings).
+
+### Install Ezra
+
+**Windows:**
+```powershell
+powershell -ExecutionPolicy Bypass -File install/install.ps1
+```
+
+**Linux / macOS:**
+```bash
+sh install/install.sh
+```
+
+Verify: `ezra --version`
 
 ---
 
-## Settings
+## Extension Settings
 
 | Setting | Default | Description |
-|---------|---------|-------------|
-| `flux.path` | `flux` | Path to the Flux executable. Set this if Flux is not on your PATH. |
-| `flux.runOnSave` | `false` | Automatically run the file whenever you save it. |
-
-Custom path example (`settings.json`):
-
-```json
-{
-  "flux.path": "C:\\Users\\YourName\\AppData\\Local\\Flux\\bin\\flux.exe"
-}
-```
+|---|---|---|
+| `ezra.executablePath` | `ezra` | Path to the `ezra` binary |
+| `ezra.runOnSave` | `false` | Auto-run on file save |
+| `ezra.lsp.enabled` | `true` | Enable the language server |
+| `ezra.lsp.serverPath` | `` | Explicit path to `ezra-lsp` |
+| `ezra.lsp.trace` | `off` | LSP trace level |
 
 ---
 
 ## Troubleshooting
 
-**File shows as Plain Text?**
-Click the language indicator in the bottom-right corner and select **Flux**.
+**"Ezra executable not found"**  
+Set `ezra.executablePath` to the full path, e.g. `C:\Users\you\AppData\Local\Ezra\bin\ezra.exe`.
 
-**"Flux executable was not found"?**
-Install the interpreter (Step 1 above), then either restart VS Code or set
-`flux.path` in your settings to the full path of the executable.
+**Syntax not highlighted**  
+Confirm the file language mode in the lower-right corner shows **Ezra**.
+Click it to change manually.
+
+**LSP not starting**  
+Check that `ezra-lsp` exists in the same directory as `ezra`.
+Set `ezra.lsp.serverPath` explicitly if needed.
 
 ---
 
-## Resources
+## Author
 
-- [GitHub Repository](https://github.com/ranaji114/Flux-programming-lang)
-- [Language Reference](https://github.com/ranaji114/Flux-programming-lang/blob/main/docs/language-reference.md)
-- [Tutorial](https://github.com/ranaji114/Flux-programming-lang/blob/main/docs/tutorial.md)
-- [CLI Reference](https://github.com/ranaji114/Flux-programming-lang/blob/main/docs/cli-reference.md)
+Created by **Ankur Rana**  
+GitHub: [github.com/ranaji114](https://github.com/ranaji114)  
+Language repo: [Flux-programming-lang](https://github.com/ranaji114/Flux-programming-lang)
 
 ---
 
 ## License
 
-MIT — Created by [Ankur Rana](https://github.com/ranaji114)
+MIT
