@@ -1,4 +1,4 @@
-﻿use std::sync::Arc;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -182,15 +182,21 @@ impl EzraLsp {
         let mut diags = Vec::new();
         for msg in &diagnostics {
             let line = msg.line.saturating_sub(1) as u32;
-            let col  = msg.column.saturating_sub(1) as u32;
+            let col = msg.column.saturating_sub(1) as u32;
             let range = Range {
-                start: Position { line, character: col },
-                end:   Position { line, character: col + 1 },
+                start: Position {
+                    line,
+                    character: col,
+                },
+                end: Position {
+                    line,
+                    character: col + 1,
+                },
             };
             diags.push(Diagnostic {
                 range,
                 severity: Some(match msg.severity {
-                    ezra::linter::Severity::Error   => DiagnosticSeverity::ERROR,
+                    ezra::linter::Severity::Error => DiagnosticSeverity::ERROR,
                     ezra::linter::Severity::Warning => DiagnosticSeverity::WARNING,
                 }),
                 message: msg.message.clone(),
@@ -198,7 +204,9 @@ impl EzraLsp {
                 ..Default::default()
             });
         }
-        self.client.publish_diagnostics(uri.clone(), diags, None).await;
+        self.client
+            .publish_diagnostics(uri.clone(), diags, None)
+            .await;
     }
 }
 
@@ -210,7 +218,7 @@ fn percent_decode(s: &str) -> String {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'%' && i + 2 < bytes.len() {
-            if let Ok(hex) = std::str::from_utf8(&bytes[i+1..i+3]) {
+            if let Ok(hex) = std::str::from_utf8(&bytes[i + 1..i + 3]) {
                 if let Ok(byte) = u8::from_str_radix(hex, 16) {
                     result.push(byte as char);
                     i += 3;
@@ -319,7 +327,11 @@ impl LanguageServer for EzraLsp {
                 }
                 // Variable: `name is …`  or  `let name …`
                 if let Some(rest) = trimmed.strip_prefix("let ") {
-                    let var = rest.split_whitespace().next().unwrap_or("").trim_end_matches(':');
+                    let var = rest
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or("")
+                        .trim_end_matches(':');
                     if !var.is_empty() {
                         user_items.push(CompletionItem {
                             label: var.to_string(),
@@ -332,7 +344,10 @@ impl LanguageServer for EzraLsp {
                     let name = name.trim();
                     if !name.is_empty()
                         && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
-                        && !matches!(name, "check" | "otherwise" | "repeat" | "for" | "while" | "until" | "loop")
+                        && !matches!(
+                            name,
+                            "check" | "otherwise" | "repeat" | "for" | "while" | "until" | "loop"
+                        )
                     {
                         user_items.push(CompletionItem {
                             label: name.to_string(),
@@ -385,94 +400,254 @@ impl LanguageServer for EzraLsp {
 
         let mut items: Vec<CompletionItem> = vec![
             // ── Control flow ───────────────────────────────────────────────
-            snip!("check if", "Conditional branch", "check if ${1:condition}\n  ${2:say \"yes\"}\notherwise\n  ${3:say \"no\"}", CompletionItemKind::KEYWORD),
-            snip!("otherwise if", "Else-if branch", "otherwise if ${1:condition}\n  $2", CompletionItemKind::KEYWORD),
+            snip!(
+                "check if",
+                "Conditional branch",
+                "check if ${1:condition}\n  ${2:say \"yes\"}\notherwise\n  ${3:say \"no\"}",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "otherwise if",
+                "Else-if branch",
+                "otherwise if ${1:condition}\n  $2",
+                CompletionItemKind::KEYWORD
+            ),
             kw!("otherwise", "Else branch", "otherwise\n  "),
-            snip!("repeat", "Repeat N times", "repeat ${1:3} times\n  $2", CompletionItemKind::KEYWORD),
-            snip!("for each", "Iterate over list", "for each ${1:item} in ${2:items}\n  $3", CompletionItemKind::KEYWORD),
-            snip!("while", "While loop", "while ${1:condition}\n  $2", CompletionItemKind::KEYWORD),
-            snip!("until", "Do-while loop", "until ${1:condition}\n  $2", CompletionItemKind::KEYWORD),
-            snip!("loop", "Infinite loop", "loop\n  $1\n  check if ${2:done}\n    break", CompletionItemKind::KEYWORD),
-            snip!("pick", "Pattern match", "pick ${1:value}\n  when ${2:\"case1\"}\n    $3\n  otherwise\n    $4", CompletionItemKind::KEYWORD),
+            snip!(
+                "repeat",
+                "Repeat N times",
+                "repeat ${1:3} times\n  $2",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "for each",
+                "Iterate over list",
+                "for each ${1:item} in ${2:items}\n  $3",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "while",
+                "While loop",
+                "while ${1:condition}\n  $2",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "until",
+                "Do-while loop",
+                "until ${1:condition}\n  $2",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "loop",
+                "Infinite loop",
+                "loop\n  $1\n  check if ${2:done}\n    break",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "pick",
+                "Pattern match",
+                "pick ${1:value}\n  when ${2:\"case1\"}\n    $3\n  otherwise\n    $4",
+                CompletionItemKind::KEYWORD
+            ),
             kw!("break", "Exit nearest loop", "break"),
             kw!("next", "Next iteration", "next"),
             kw!("return", "Return from function", "return "),
             // ── Functions ─────────────────────────────────────────────────
-            snip!("give", "Define a function", "give ${1:name}(${2:params})\n  -> ${3:value}", CompletionItemKind::KEYWORD),
-            snip!("lambda", "Arrow function", "${1:name} is ${2:n} -> ${3:n * 2}", CompletionItemKind::KEYWORD),
+            snip!(
+                "give",
+                "Define a function",
+                "give ${1:name}(${2:params})\n  -> ${3:value}",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "lambda",
+                "Arrow function",
+                "${1:name} is ${2:n} -> ${3:n * 2}",
+                CompletionItemKind::KEYWORD
+            ),
             // ── Error handling ────────────────────────────────────────────
-            snip!("try", "Error handling", "try\n  $1\ncatch ${2:err}\n  say \"Error: {${2:err}}\"", CompletionItemKind::KEYWORD),
-            snip!("try/finally", "Try with finally", "try\n  $1\ncatch ${2:err}\n  $3\nfinally\n  $4", CompletionItemKind::KEYWORD),
-            snip!("throw", "Throw an error", "throw \"${1:message}\"", CompletionItemKind::KEYWORD),
-            snip!("assert", "Assert condition", "assert ${1:condition}, \"${2:message}\"", CompletionItemKind::KEYWORD),
+            snip!(
+                "try",
+                "Error handling",
+                "try\n  $1\ncatch ${2:err}\n  say \"Error: {${2:err}}\"",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "try/finally",
+                "Try with finally",
+                "try\n  $1\ncatch ${2:err}\n  $3\nfinally\n  $4",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "throw",
+                "Throw an error",
+                "throw \"${1:message}\"",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "assert",
+                "Assert condition",
+                "assert ${1:condition}, \"${2:message}\"",
+                CompletionItemKind::KEYWORD
+            ),
             // ── Declarations ──────────────────────────────────────────────
-            snip!("let", "Mutable variable", "let ${1:name} is ${2:value}", CompletionItemKind::KEYWORD),
-            snip!("const", "Immutable constant", "const ${1:NAME} is ${2:42}", CompletionItemKind::KEYWORD),
-            snip!("struct", "Define struct", "struct ${1:Name}\n  ${2:field}", CompletionItemKind::KEYWORD),
-            snip!("enum", "Define enum", "enum ${1:Name}\n  ${2:Variant}", CompletionItemKind::KEYWORD),
-            snip!("impl", "Implement methods", "impl ${1:Name}\n  give ${2:method}(self)\n    $3", CompletionItemKind::KEYWORD),
+            snip!(
+                "let",
+                "Mutable variable",
+                "let ${1:name} is ${2:value}",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "const",
+                "Immutable constant",
+                "const ${1:NAME} is ${2:42}",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "struct",
+                "Define struct",
+                "struct ${1:Name}\n  ${2:field}",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "enum",
+                "Define enum",
+                "enum ${1:Name}\n  ${2:Variant}",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "impl",
+                "Implement methods",
+                "impl ${1:Name}\n  give ${2:method}(self)\n    $3",
+                CompletionItemKind::KEYWORD
+            ),
             // ── Modules ───────────────────────────────────────────────────
-            snip!("use", "Import module", "use \"${1:std/math}\" as ${2:math}", CompletionItemKind::KEYWORD),
-            snip!("from", "Import names", "from \"${1:std/math}\" use ${2:sin, pi}", CompletionItemKind::KEYWORD),
+            snip!(
+                "use",
+                "Import module",
+                "use \"${1:std/math}\" as ${2:math}",
+                CompletionItemKind::KEYWORD
+            ),
+            snip!(
+                "from",
+                "Import names",
+                "from \"${1:std/math}\" use ${2:sin, pi}",
+                CompletionItemKind::KEYWORD
+            ),
             // ── Constants ─────────────────────────────────────────────────
-            CompletionItem { label: "yes".into(),     detail: Some("Boolean true".into()),  kind: Some(CompletionItemKind::CONSTANT), ..Default::default() },
-            CompletionItem { label: "no".into(),      detail: Some("Boolean false".into()), kind: Some(CompletionItemKind::CONSTANT), ..Default::default() },
-            CompletionItem { label: "nothing".into(), detail: Some("Null value".into()),    kind: Some(CompletionItemKind::CONSTANT), ..Default::default() },
+            CompletionItem {
+                label: "yes".into(),
+                detail: Some("Boolean true".into()),
+                kind: Some(CompletionItemKind::CONSTANT),
+                ..Default::default()
+            },
+            CompletionItem {
+                label: "no".into(),
+                detail: Some("Boolean false".into()),
+                kind: Some(CompletionItemKind::CONSTANT),
+                ..Default::default()
+            },
+            CompletionItem {
+                label: "nothing".into(),
+                detail: Some("Null value".into()),
+                kind: Some(CompletionItemKind::CONSTANT),
+                ..Default::default()
+            },
             // ── Built-in output/input ─────────────────────────────────────
-            builtin!("say",           "say expr → stdout + newline",            "say ${1:\"Hello!\"}"),
-            builtin!("write",         "write expr → stdout no newline",         "write ${1:\"text\"}"),
-            builtin!("warn",          "warn expr → stderr",                     "warn ${1:\"message\"}"),
-            builtin!("fail",          "fail expr → stderr",                     "fail ${1:\"error\"}"),
-            builtin!("debug",         "debug expr → stderr",                    "debug ${1:value}"),
-            builtin!("input",         "input(prompt) → text",                   "input \"${1:prompt: }\""),
-            builtin!("input_number",  "input_number(prompt) → number",          "input_number \"${1:Enter number: }\""),
-            builtin!("exit",          "exit(code)",                             "exit(${1:0})"),
+            builtin!("say", "say expr → stdout + newline", "say ${1:\"Hello!\"}"),
+            builtin!(
+                "write",
+                "write expr → stdout no newline",
+                "write ${1:\"text\"}"
+            ),
+            builtin!("warn", "warn expr → stderr", "warn ${1:\"message\"}"),
+            builtin!("fail", "fail expr → stderr", "fail ${1:\"error\"}"),
+            builtin!("debug", "debug expr → stderr", "debug ${1:value}"),
+            builtin!("input", "input(prompt) → text", "input \"${1:prompt: }\""),
+            builtin!(
+                "input_number",
+                "input_number(prompt) → number",
+                "input_number \"${1:Enter number: }\""
+            ),
+            builtin!("exit", "exit(code)", "exit(${1:0})"),
             // ── Built-in type/len ─────────────────────────────────────────
-            builtin!("len",           "len(v) → number",                        "len(${1:value})"),
-            builtin!("type_of",       "type_of(v) → text",                     "type_of(${1:value})"),
-            builtin!("text",          "text(v) → text",                        "text(${1:value})"),
-            builtin!("number",        "number(v) → number",                    "number(${1:value})"),
-            builtin!("bool",          "bool(v) → bool",                        "bool(${1:value})"),
+            builtin!("len", "len(v) → number", "len(${1:value})"),
+            builtin!("type_of", "type_of(v) → text", "type_of(${1:value})"),
+            builtin!("text", "text(v) → text", "text(${1:value})"),
+            builtin!("number", "number(v) → number", "number(${1:value})"),
+            builtin!("bool", "bool(v) → bool", "bool(${1:value})"),
             // ── Math ──────────────────────────────────────────────────────
-            builtin!("abs",           "abs(n) → number",                       "abs(${1:n})"),
-            builtin!("sqrt",          "sqrt(n) → number",                      "sqrt(${1:n})"),
-            builtin!("floor",         "floor(n) → number",                     "floor(${1:n})"),
-            builtin!("ceil",          "ceil(n) → number",                      "ceil(${1:n})"),
-            builtin!("round",         "round(n) → number",                     "round(${1:n})"),
-            builtin!("min",           "min(a, b) → number",                    "min(${1:a}, ${2:b})"),
-            builtin!("max",           "max(a, b) → number",                    "max(${1:a}, ${2:b})"),
-            builtin!("pow",           "pow(base, exp) → number",               "pow(${1:2}, ${2:8})"),
-            builtin!("sin",           "sin(n) → number (radians)",             "sin(${1:n})"),
-            builtin!("cos",           "cos(n) → number (radians)",             "cos(${1:n})"),
-            builtin!("random",        "random() → float [0,1)",                "random()"),
-            builtin!("random_int",    "random_int(min, max) → integer",        "random_int(${1:1}, ${2:6})"),
+            builtin!("abs", "abs(n) → number", "abs(${1:n})"),
+            builtin!("sqrt", "sqrt(n) → number", "sqrt(${1:n})"),
+            builtin!("floor", "floor(n) → number", "floor(${1:n})"),
+            builtin!("ceil", "ceil(n) → number", "ceil(${1:n})"),
+            builtin!("round", "round(n) → number", "round(${1:n})"),
+            builtin!("min", "min(a, b) → number", "min(${1:a}, ${2:b})"),
+            builtin!("max", "max(a, b) → number", "max(${1:a}, ${2:b})"),
+            builtin!("pow", "pow(base, exp) → number", "pow(${1:2}, ${2:8})"),
+            builtin!("sin", "sin(n) → number (radians)", "sin(${1:n})"),
+            builtin!("cos", "cos(n) → number (radians)", "cos(${1:n})"),
+            builtin!("random", "random() → float [0,1)", "random()"),
+            builtin!(
+                "random_int",
+                "random_int(min, max) → integer",
+                "random_int(${1:1}, ${2:6})"
+            ),
             // ── Collections ───────────────────────────────────────────────
-            builtin!("range",         "range(n) → list",                       "range(${1:10})"),
-            builtin!("keys",          "keys(obj) → list",                      "keys(${1:obj})"),
-            builtin!("values",        "values(obj) → list",                    "values(${1:obj})"),
-            builtin!("has",           "has(obj, key) → bool",                  "has(${1:obj}, \"${2:key}\")"),
+            builtin!("range", "range(n) → list", "range(${1:10})"),
+            builtin!("keys", "keys(obj) → list", "keys(${1:obj})"),
+            builtin!("values", "values(obj) → list", "values(${1:obj})"),
+            builtin!("has", "has(obj, key) → bool", "has(${1:obj}, \"${2:key}\")"),
             // ── File I/O ──────────────────────────────────────────────────
-            builtin!("read_file",     "read_file(path) → text",                "read_file(\"${1:file.txt}\")"),
-            builtin!("write_file",    "write_file(path, content)",             "write_file(\"${1:file.txt}\", ${2:content})"),
-            builtin!("append_file",   "append_file(path, content)",            "append_file(\"${1:file.txt}\", ${2:content})"),
-            builtin!("file_exists",   "file_exists(path) → bool",              "file_exists(\"${1:file.txt}\")"),
-            builtin!("file_delete",   "file_delete(path)",                     "file_delete(\"${1:file.txt}\")"),
-            builtin!("list_dir",      "list_dir(path) → list",                 "list_dir(\"${1:.}\")"),
-            builtin!("create_dir",    "create_dir(path)",                      "create_dir(\"${1:dir}\")"),
+            builtin!(
+                "read_file",
+                "read_file(path) → text",
+                "read_file(\"${1:file.txt}\")"
+            ),
+            builtin!(
+                "write_file",
+                "write_file(path, content)",
+                "write_file(\"${1:file.txt}\", ${2:content})"
+            ),
+            builtin!(
+                "append_file",
+                "append_file(path, content)",
+                "append_file(\"${1:file.txt}\", ${2:content})"
+            ),
+            builtin!(
+                "file_exists",
+                "file_exists(path) → bool",
+                "file_exists(\"${1:file.txt}\")"
+            ),
+            builtin!(
+                "file_delete",
+                "file_delete(path)",
+                "file_delete(\"${1:file.txt}\")"
+            ),
+            builtin!("list_dir", "list_dir(path) → list", "list_dir(\"${1:.}\")"),
+            builtin!("create_dir", "create_dir(path)", "create_dir(\"${1:dir}\")"),
             // ── JSON ──────────────────────────────────────────────────────
-            builtin!("parse_json",    "parse_json(s) → value",                 "parse_json(${1:json_string})"),
-            builtin!("stringify_json","stringify_json(v) → text",              "stringify_json(${1:value})"),
+            builtin!(
+                "parse_json",
+                "parse_json(s) → value",
+                "parse_json(${1:json_string})"
+            ),
+            builtin!(
+                "stringify_json",
+                "stringify_json(v) → text",
+                "stringify_json(${1:value})"
+            ),
             // ── OS ────────────────────────────────────────────────────────
-            builtin!("cwd",           "cwd() → text",                          "cwd()"),
-            builtin!("env",           "env(name) → text",                      "env(\"${1:HOME}\")"),
-            builtin!("sleep",         "sleep(ms)",                             "sleep(${1:1000})"),
-            builtin!("time",          "time() → unix seconds",                 "time()"),
-            builtin!("date_now",      "date_now() → object",                   "date_now()"),
+            builtin!("cwd", "cwd() → text", "cwd()"),
+            builtin!("env", "env(name) → text", "env(\"${1:HOME}\")"),
+            builtin!("sleep", "sleep(ms)", "sleep(${1:1000})"),
+            builtin!("time", "time() → unix seconds", "time()"),
+            builtin!("date_now", "date_now() → object", "date_now()"),
             // ── Type checks ───────────────────────────────────────────────
-            builtin!("is_number",     "is_number(v) → bool",                   "is_number(${1:v})"),
-            builtin!("is_text",       "is_text(v) → bool",                     "is_text(${1:v})"),
-            builtin!("is_list",       "is_list(v) → bool",                     "is_list(${1:v})"),
-            builtin!("is_nothing",    "is_nothing(v) → bool",                  "is_nothing(${1:v})"),
+            builtin!("is_number", "is_number(v) → bool", "is_number(${1:v})"),
+            builtin!("is_text", "is_text(v) → bool", "is_text(${1:v})"),
+            builtin!("is_list", "is_list(v) → bool", "is_list(${1:v})"),
+            builtin!("is_nothing", "is_nothing(v) → bool", "is_nothing(${1:v})"),
         ];
 
         // Deduplicate and append user symbols
@@ -545,8 +720,14 @@ impl LanguageServer for EzraLsp {
                         let location = Location {
                             uri: uri.clone(),
                             range: Range {
-                                start: Position { line: line_no as u32, character: 0 },
-                                end:   Position { line: line_no as u32, character: line.len() as u32 },
+                                start: Position {
+                                    line: line_no as u32,
+                                    character: 0,
+                                },
+                                end: Position {
+                                    line: line_no as u32,
+                                    character: line.len() as u32,
+                                },
                             },
                         };
                         return Ok(Some(GotoDefinitionResponse::Scalar(location)));

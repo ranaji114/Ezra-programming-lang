@@ -971,10 +971,7 @@ impl FastVM {
         }
 
         // Build a tiny wrapper program: just one Call instruction followed by Halt.
-        let wrapper: Vec<Instr> = vec![
-            Instr::Call(args.len()),
-            Instr::Halt,
-        ];
+        let wrapper: Vec<Instr> = vec![Instr::Call(args.len()), Instr::Halt];
         let result = self.exec_program(&wrapper);
 
         // Restore loop stack to its prior state on error.
@@ -1807,11 +1804,17 @@ impl FastVM {
         match name {
             // ---- output --------------------------------------------------
             "say" => {
-                println!("{}", args.first().map(|v| v.to_string()).unwrap_or_default());
+                println!(
+                    "{}",
+                    args.first().map(|v| v.to_string()).unwrap_or_default()
+                );
                 Ok(Value::Nothing)
             }
             "write" | "print" => {
-                print!("{}", args.first().map(|v| v.to_string()).unwrap_or_default());
+                print!(
+                    "{}",
+                    args.first().map(|v| v.to_string()).unwrap_or_default()
+                );
                 std::io::stdout().flush().ok();
                 Ok(Value::Nothing)
             }
@@ -1863,9 +1866,7 @@ impl FastVM {
                 let trimmed = line.trim();
                 match trimmed.parse::<f64>() {
                     Ok(n) => Ok(Value::Number(n)),
-                    Err(_) => Err(FluxError::runtime(format!(
-                        "invalid number: `{trimmed}`"
-                    ))),
+                    Err(_) => Err(FluxError::runtime(format!("invalid number: `{trimmed}`"))),
                 }
             }
             // ---- type conversions ----------------------------------------
@@ -2327,7 +2328,8 @@ impl FastVM {
                 Ok(Value::Number(d.as_secs_f64()))
             }
             "sleep" => {
-                let ms = args.first()
+                let ms = args
+                    .first()
                     .and_then(|v| {
                         if let Value::Number(n) = v {
                             Some(*n)
@@ -2341,7 +2343,8 @@ impl FastVM {
             }
             // ---- system --------------------------------------------------
             "exit" => {
-                let code = args.first()
+                let code = args
+                    .first()
                     .and_then(|v| {
                         if let Value::Number(n) = v {
                             Some(*n as i32)
@@ -2479,7 +2482,8 @@ impl FastVM {
                 }
             }
             "assert_error" => {
-                let func = args.first()
+                let func = args
+                    .first()
                     .cloned()
                     .ok_or_else(|| FluxError::runtime("assert_error requires a function"))?;
                 match self.invoke_value(func, Vec::new()) {
@@ -3011,7 +3015,8 @@ impl FastVM {
                 }
                 Ok(acc)
             }
-            (Value::List(l), "flat_map") => {                let func = args
+            (Value::List(l), "flat_map") => {
+                let func = args
                     .first()
                     .cloned()
                     .ok_or_else(|| FluxError::runtime("flat_map requires a function"))?;

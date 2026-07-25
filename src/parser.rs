@@ -384,7 +384,11 @@ impl Parser {
                 self.advance();
                 let error_name = if next.text == "catch" {
                     None
-                } else { next.text.strip_prefix("catch ").map(|name| name.to_string()) };
+                } else {
+                    next.text
+                        .strip_prefix("catch ")
+                        .map(|name| name.to_string())
+                };
                 let catch_indent = self.required_child_indent(indent, next.line_number)?;
                 let catch_body = self.parse_block(catch_indent)?;
                 catches.push(crate::ast::CatchClause {
@@ -928,8 +932,10 @@ impl ExprParser {
             // consume `(`
             self.current += 1;
             let mut names = Vec::new();
-            while !matches!(self.tokens[self.current].kind, TokenKind::RightParen | TokenKind::Eof)
-            {
+            while !matches!(
+                self.tokens[self.current].kind,
+                TokenKind::RightParen | TokenKind::Eof
+            ) {
                 let t = self.advance().clone();
                 if let TokenKind::Identifier(name) = t.kind {
                     names.push(name);
@@ -939,7 +945,10 @@ impl ExprParser {
                 }
             }
             // consume `)`
-            self.consume(|k| matches!(k, TokenKind::RightParen), "expected `)` in arrow function params")?;
+            self.consume(
+                |k| matches!(k, TokenKind::RightParen),
+                "expected `)` in arrow function params",
+            )?;
             names
         } else {
             // single identifier
@@ -950,7 +959,10 @@ impl ExprParser {
             }
         };
         // consume `->`
-        self.consume(|k| matches!(k, TokenKind::Arrow), "expected `->` in arrow function")?;
+        self.consume(
+            |k| matches!(k, TokenKind::Arrow),
+            "expected `->` in arrow function",
+        )?;
         let body = self.expression()?;
         Ok(Expr::ArrowFunction {
             params,

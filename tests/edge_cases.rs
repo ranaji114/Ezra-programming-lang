@@ -106,5 +106,9 @@ fn edge_input_number_invalid() {
     // Write a wrapper that doesn't use stdin; validate error message text directly
     // (can't pipe stdin in a test easily without a pty, so we test the behaviour
     //  indirectly via run_source in the unit-test suite instead).
-    assert!(path.exists(), "edge case file must exist: {}", path.display());
+    assert!(
+        path.exists(),
+        "edge case file must exist: {}",
+        path.display()
+    );
 }

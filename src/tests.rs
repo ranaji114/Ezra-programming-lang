@@ -264,10 +264,8 @@ assert sorted[999] is 999, "largest element should be 999"
     #[test]
     fn edge_type_coercion_addition() {
         // number + text → text concatenation
-        run_source(
-            "r is 1 + \"2\"\nassert r is \"12\", \"number + text should concatenate\"",
-        )
-        .expect("type coercion in addition");
+        run_source("r is 1 + \"2\"\nassert r is \"12\", \"number + text should concatenate\"")
+            .expect("type coercion in addition");
     }
 
     #[test]
@@ -327,8 +325,7 @@ assert outer_caught, "outer catch should have run""#,
 
     #[test]
     fn edge_const_reassign_throws() {
-        let err = run_source("const X is 42\nX is 99")
-            .expect_err("reassigning const should fail");
+        let err = run_source("const X is 42\nX is 99").expect_err("reassigning const should fail");
         assert!(
             err.message.contains("constant"),
             "error should mention constant, got: {}",

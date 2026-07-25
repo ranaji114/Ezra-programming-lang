@@ -1392,7 +1392,7 @@ impl Interpreter {
             "parse_json" => {
                 expect_arg_count(name, &args, 1)?;
                 let text = args[0].to_string();
-                
+
                 Self::json_to_value(&text)?
             }
             "stringify_json" => {
