@@ -1,9 +1,5 @@
-zname: CI · Build · Release
+name: CI · Build · Release
 # Author: Ankur Rana
-# Triggers:
-#   - Every push/PR: quality gate + test
-#   - git tag v*:    full cross-platform build + GitHub Release
-#   - main branch:  docs deploy to GitHub Pages
 
 on:
   push:
@@ -17,7 +13,7 @@ permissions:
   id-token: write
 
 # ---------------------------------------------------------------------------
-# Quality gate — runs on all 3 platforms for every push/PR
+# Quality gate
 # ---------------------------------------------------------------------------
 jobs:
   test:
@@ -29,9 +25,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-
       - uses: dtolnay/rust-toolchain@stable
-
       - name: Cargo cache
         uses: actions/cache@v4
         with:
@@ -41,15 +35,13 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
       - run: cargo fmt -- --check
         continue-on-error: true
       - run: cargo clippy
       - run: cargo test --all
 
   # ---------------------------------------------------------------------------
-  # Cross-platform binary builds (only on tag or main)
+  # Cross-platform binary builds
   # ---------------------------------------------------------------------------
   build:
     name: "Build · ${{ matrix.name }}"
@@ -60,44 +52,34 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ---- Windows ----
           - name: windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
             binary: ezra.exe
-            lsp: ezra-lsp.exe
             archive: ezra-windows-x86_64-1.0.0.zip
 
-          # ---- Linux x86_64 ----
           - name: linux-x86_64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary: ezra
-            lsp: ezra-lsp
             archive: ezra-linux-x86_64-1.0.0.tar.gz
 
-          # ---- Linux ARM64 (cross-compile) ----
           - name: linux-aarch64
             os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             binary: ezra
-            lsp: ezra-lsp
             archive: ezra-linux-aarch64-1.0.0.tar.gz
 
-          # ---- macOS x86_64 ----
           - name: macos-x86_64
             os: macos-13
             target: x86_64-apple-darwin
             binary: ezra
-            lsp: ezra-lsp
             archive: ezra-macos-x86_64-1.0.0.tar.gz
 
-          # ---- macOS ARM64 (Apple Silicon) ----
           - name: macos-aarch64
             os: macos-latest
             target: aarch64-apple-darwin
             binary: ezra
-            lsp: ezra-lsp
             archive: ezra-macos-aarch64-1.0.0.tar.gz
 
     steps:
@@ -107,42 +89,43 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      # ARM64 cross-compile toolchain
-      - name: Install ARM64 linker (Linux cross)
+      - name: Install ARM64 cross-compiler
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           sudo apt-get update -q
           sudo apt-get install -y gcc-aarch64-linux-gnu
-        env:
-          DEBIAN_FRONTEND: noninteractive
 
-      - name: Build release binary
+      - name: Build
         run: cargo build --release --target ${{ matrix.target }}
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      # ---- Windows: .zip ----
-      - name: Package (Windows zip)
+      - name: Run tests (native only)
+        if: matrix.target != 'aarch64-unknown-linux-gnu'
+        run: cargo test --all
+
+      - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $bin   = "target/${{ matrix.target }}/release/${{ matrix.binary }}"
-          $items = @($bin, "README.md", "examples", "std")
-          $items = $items | Where-Object { Test-Path $_ }
-          Compress-Archive -Path $items -DestinationPath "${{ matrix.archive }}" -Force
+          $items = @(
+            "target/${{ matrix.target }}/release/ezra.exe",
+            "target/${{ matrix.target }}/release/ezra-lsp.exe",
+            "README.md", "examples", "std", "install/install.ps1"
+          )
+          $existing = $items | Where-Object { Test-Path $_ }
+          Compress-Archive -Path $existing -DestinationPath "${{ matrix.archive }}" -Force
 
-      # ---- Linux/macOS: .tar.gz ----
-      - name: Package (tar.gz)
+      - name: Package (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
           BIN="target/${{ matrix.target }}/release/${{ matrix.binary }}"
-          LSP="target/${{ matrix.target }}/release/${{ matrix.lsp }}"
-          EXTRAS=""
-          [ -f "$LSP" ] && EXTRAS="$LSP"
-          tar -czf "${{ matrix.archive }}" $BIN $EXTRAS README.md examples std
+          LSP="target/${{ matrix.target }}/release/ezra-lsp"
+          EXTRA=""
+          [ -f "$LSP" ] && EXTRA="$LSP"
+          tar -czf "${{ matrix.archive }}" $BIN $EXTRA README.md examples std install/install.sh
 
-      # ---- Checksum ----
-      - name: Generate SHA256
+      - name: SHA256
         shell: bash
         run: |
           if command -v sha256sum &>/dev/null; then
@@ -160,10 +143,59 @@ jobs:
             ${{ matrix.archive }}.sha256
 
   # ---------------------------------------------------------------------------
-  # Debian package (.deb) — Linux x86_64 only
+  # Windows GUI Installer (.exe) — using ps2exe on Windows runner
+  # ---------------------------------------------------------------------------
+  build-windows-installer:
+    name: "Build · Windows GUI Installer (.exe)"
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Build GUI installer EXE with ps2exe
+        shell: pwsh
+        run: |
+          Install-Module -Name ps2exe -Scope CurrentUser -Force -AllowClobber
+          Import-Module ps2exe -Force
+          $in  = "installers\windows\ezra-installer-gui.ps1"
+          $out = "installers\windows\EzraSetup-1.0.0.exe"
+          Invoke-ps2exe `
+            -inputFile  $in `
+            -outputFile $out `
+            -title      "Ezra Language Setup" `
+            -description "Ezra Language 1.0.0 Installer by Ankur Rana" `
+            -company    "Ankur Rana" `
+            -product    "Ezra Language" `
+            -version    "1.0.0.0" `
+            -noConsole
+          $size = [math]::Round((Get-Item $out).Length/1KB)
+          Write-Host "EXE: $out ($size KB)"
+
+      - name: SHA256
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash "installers\windows\EzraSetup-1.0.0.exe" -Algorithm SHA256).Hash.ToLower()
+          "$hash  EzraSetup-1.0.0.exe" | Set-Content "installers\windows\EzraSetup-1.0.0.exe.sha256"
+          Write-Host $hash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EzraSetup-1.0.0.exe
+          path: |
+            installers/windows/EzraSetup-1.0.0.exe
+            installers/windows/EzraSetup-1.0.0.exe.sha256
+
+  # ---------------------------------------------------------------------------
+  # Linux .deb package
   # ---------------------------------------------------------------------------
   build-deb:
-    name: "Build · debian package"
+    name: "Build · Linux .deb installer"
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -175,56 +207,163 @@ jobs:
       - run: cargo build --release
 
       - name: Build .deb
-        working-directory: installers/linux
         run: |
-          chmod +x build-deb.sh
-          ./build-deb.sh 1.0.0 amd64
+          VERSION="1.0.0"
+          ARCH="amd64"
+          PKG="ezra-lang_${VERSION}_${ARCH}"
+          BINARY="target/release/ezra"
+          LSP="target/release/ezra-lsp"
+
+          mkdir -p ${PKG}/DEBIAN
+          mkdir -p ${PKG}/usr/bin
+          mkdir -p ${PKG}/usr/share/ezra/examples
+          mkdir -p ${PKG}/usr/share/ezra/std
+          mkdir -p ${PKG}/usr/share/doc/ezra-lang
+          mkdir -p ${PKG}/usr/share/man/man1
+
+          install -m755 $BINARY ${PKG}/usr/bin/ezra
+          [ -f $LSP ] && install -m755 $LSP ${PKG}/usr/bin/ezra-lsp
+          cp -r examples/. ${PKG}/usr/share/ezra/examples/
+          cp -r std/.      ${PKG}/usr/share/ezra/std/
+          cp README.md     ${PKG}/usr/share/doc/ezra-lang/
+          cp LICENSE       ${PKG}/usr/share/doc/ezra-lang/copyright
+
+          cat > ${PKG}/usr/share/man/man1/ezra.1 << 'MAN'
+          .TH EZRA 1 "2026" "1.0.0" "Ezra Language"
+          .SH NAME
+          ezra \- Ezra scripting language interpreter
+          .SH SYNOPSIS
+          .B ezra
+          [\fICOMMAND\fR] [\fIFILE\fR]
+          .SH DESCRIPTION
+          Ezra is a readable scripting language built in Rust. Created by Ankur Rana.
+          .SH COMMANDS
+          run, check, test, fmt, lint, build, repl, new, --version
+          .SH AUTHOR
+          Ankur Rana <https://github.com/ranaji114>
+          MAN
+          gzip -9 ${PKG}/usr/share/man/man1/ezra.1
+
+          INSTALLED=$(du -sk ${PKG} | cut -f1)
+          cat > ${PKG}/DEBIAN/control << EOF
+          Package: ezra-lang
+          Version: $VERSION
+          Section: devel
+          Priority: optional
+          Architecture: $ARCH
+          Installed-Size: $INSTALLED
+          Maintainer: Ankur Rana <ankur@ranaji114.github.io>
+          Homepage: https://ranaji114.github.io/Flux-programming-lang
+          Description: Ezra scripting language interpreter
+           Readable, indentation-based scripting language built in Rust.
+           Created by Ankur Rana.
+          EOF
+
+          cat > ${PKG}/DEBIAN/postinst << 'SCRIPT'
+          #!/bin/sh
+          echo "Ezra 1.0.0 installed! Run: ezra --version"
+          SCRIPT
+          chmod 755 ${PKG}/DEBIAN/postinst
+
+          dpkg-deb --build --root-owner-group ${PKG}
+          sha256sum ${PKG}.deb > ${PKG}.deb.sha256
+          echo "Built: ${PKG}.deb"
+          cat ${PKG}.deb.sha256
 
       - uses: actions/upload-artifact@v4
         with:
           name: ezra-lang_1.0.0_amd64.deb
           path: |
-            installers/linux/ezra-lang_1.0.0_amd64.deb
-            installers/linux/SHA256SUMS
+            ezra-lang_1.0.0_amd64.deb
+            ezra-lang_1.0.0_amd64.deb.sha256
 
   # ---------------------------------------------------------------------------
-  # Windows Inno Setup installer (.exe)
+  # macOS .pkg installer
   # ---------------------------------------------------------------------------
-  build-inno:
-    name: "Build · Windows installer (.exe)"
+  build-macos-pkg:
+    name: "Build · macOS .pkg installer (${{ matrix.arch }})"
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            os: macos-13
+            target: x86_64-apple-darwin
+            pkg: ezra-macos-x86_64-1.0.0.pkg
+          - arch: aarch64
+            os: macos-latest
+            target: aarch64-apple-darwin
+            pkg: ezra-macos-aarch64-1.0.0.pkg
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
-      - run: cargo build --release
+      - run: cargo build --release --target ${{ matrix.target }}
 
-      # Download Inno Setup
-      - name: Install Inno Setup
-        run: choco install innosetup --no-progress -y
+      - name: Build .pkg
+        run: |
+          BIN="target/${{ matrix.target }}/release/ezra"
+          LSP="target/${{ matrix.target }}/release/ezra-lsp"
+          PAYLOAD="_payload_${{ matrix.arch }}"
+          SCRIPTS="_scripts_${{ matrix.arch }}"
 
-      - name: Build installer
-        run: iscc installers\windows\ezra-setup.iss
+          mkdir -p ${PAYLOAD}/usr/local/bin
+          mkdir -p ${PAYLOAD}/usr/local/share/ezra/examples
+          mkdir -p ${PAYLOAD}/usr/local/share/ezra/std
+          mkdir -p ${PAYLOAD}/usr/local/share/doc/ezra
+          mkdir -p ${SCRIPTS}
 
-      - name: Checksum
-        shell: bash
-        run: sha256sum installers/windows/output/ezra-windows-x86_64-1.0.0.exe > installers/windows/output/ezra-windows-x86_64-1.0.0.exe.sha256
+          install -m755 $BIN ${PAYLOAD}/usr/local/bin/ezra
+          [ -f $LSP ] && install -m755 $LSP ${PAYLOAD}/usr/local/bin/ezra-lsp
+          cp -r examples/. ${PAYLOAD}/usr/local/share/ezra/examples/
+          cp -r std/.      ${PAYLOAD}/usr/local/share/ezra/std/
+          cp README.md     ${PAYLOAD}/usr/local/share/doc/ezra/
+          cp LICENSE       ${PAYLOAD}/usr/local/share/doc/ezra/
+
+          cat > ${SCRIPTS}/postinstall << 'SCRIPT'
+          #!/bin/sh
+          # Add to PATH in shell profiles
+          for RCFILE in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
+            if [ -f "$RCFILE" ] && ! grep -q "ezra" "$RCFILE"; then
+              echo 'export PATH="/usr/local/bin:$PATH"' >> "$RCFILE"
+            fi
+          done
+          echo "Ezra 1.0.0 installed!"
+          echo "Run: ezra --version"
+          SCRIPT
+          chmod 755 ${SCRIPTS}/postinstall
+
+          pkgbuild \
+            --root ${PAYLOAD} \
+            --scripts ${SCRIPTS} \
+            --identifier "io.github.ranaji114.ezra" \
+            --version "1.0.0" \
+            --install-location "/" \
+            "${{ matrix.pkg }}"
+
+          shasum -a 256 "${{ matrix.pkg }}" > "${{ matrix.pkg }}.sha256"
+          echo "Built: ${{ matrix.pkg }}"
+          cat "${{ matrix.pkg }}.sha256"
+          rm -rf ${PAYLOAD} ${SCRIPTS}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ezra-windows-x86_64-1.0.0-installer
+          name: ${{ matrix.pkg }}
           path: |
-            installers/windows/output/ezra-windows-x86_64-1.0.0.exe
-            installers/windows/output/ezra-windows-x86_64-1.0.0.exe.sha256
+            ${{ matrix.pkg }}
+            ${{ matrix.pkg }}.sha256
 
   # ---------------------------------------------------------------------------
-  # VS Code extension (.vsix)
+  # VS Code Extension VSIX
   # ---------------------------------------------------------------------------
   build-vsix:
-    name: "Build · VS Code extension (.vsix)"
+    name: "Build · VS Code Extension (.vsix)"
     needs: test
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -233,18 +372,13 @@ jobs:
         working-directory: vscode-extension/flux
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: npm
           cache-dependency-path: vscode-extension/flux/package-lock.json
-
       - run: npm ci
-
-      - name: Package VSIX
-        run: npm run package
-
+      - run: npm run package
       - name: Rename and checksum
         id: vsix
         run: |
@@ -252,7 +386,6 @@ jobs:
           mv "ezra-lang-${VERSION}.vsix" "ezra-lang-${VERSION}-vscode.vsix"
           sha256sum "ezra-lang-${VERSION}-vscode.vsix" > "ezra-lang-${VERSION}-vscode.vsix.sha256"
           echo "vsix=ezra-lang-${VERSION}-vscode.vsix" >> "$GITHUB_OUTPUT"
-
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.vsix.outputs.vsix }}
@@ -261,7 +394,7 @@ jobs:
             vscode-extension/flux/${{ steps.vsix.outputs.vsix }}.sha256
 
   # ---------------------------------------------------------------------------
-  # GitHub Pages docs deployment (main branch only)
+  # GitHub Pages docs
   # ---------------------------------------------------------------------------
   deploy-docs:
     name: "Deploy · GitHub Pages"
@@ -273,34 +406,28 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install MkDocs Material
-        run: pip install mkdocs-material mkdocs-minify-plugin
-
-      - name: Build docs
-        run: mkdocs build --strict
-
+      - run: pip install mkdocs-material mkdocs-minify-plugin
+      - run: mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site/
-
       - id: deploy
         uses: actions/deploy-pages@v4
 
   # ---------------------------------------------------------------------------
-  # GitHub Release — assemble all artifacts and publish
+  # GitHub Release — publish all artifacts
   # ---------------------------------------------------------------------------
   release:
     name: "Release · GitHub"
     if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - build
+      - build-windows-installer
       - build-deb
-      - build-inno
+      - build-macos-pkg
       - build-vsix
     runs-on: ubuntu-latest
     steps:
@@ -317,55 +444,77 @@ jobs:
           find . -name "*.sha256" -exec cat {} \; | sort -k2 > SHA256SUMS
           echo "=== SHA256SUMS ===" && cat SHA256SUMS
 
-      - name: Generate release notes
-        id: notes
+      - name: Release notes
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          cat > RELEASE_NOTES.md << EOF
-          # Ezra ${TAG}
+          cat > RELEASE_NOTES.md << 'EOF'
+          ## Ezra Language — Production Release
 
           **Created by Ankur Rana**
-          **Docs:** https://ranaji114.github.io/Flux-programming-lang
 
           ---
 
-          ## Install
+          ## Windows Install
 
-          ### Windows (one-click installer)
-          Download \`ezra-windows-x86_64-1.0.0.exe\` and run it.
-          Or use the archive:
-          \`\`\`powershell
-          powershell -ExecutionPolicy Bypass -File install/install.ps1
-          \`\`\`
+          ### Option 1 — GUI Installer (recommended, Python-style)
+          Download **`EzraSetup-1.0.0.exe`** and double-click it.
+          - Graphical wizard with install directory picker
+          - Automatically adds `ezra` to PATH
+          - Optional VS Code extension download
 
-          ### Linux (Debian/Ubuntu)
-          \`\`\`bash
+          ### Option 2 — Command line
+          ```powershell
+          powershell -ExecutionPolicy Bypass -File install\install.ps1
+          ```
+
+          ---
+
+          ## Linux Install
+
+          ### Debian/Ubuntu (.deb)
+          ```bash
           sudo dpkg -i ezra-lang_1.0.0_amd64.deb
-          \`\`\`
-          Or via archive + install script:
-          \`\`\`bash
-          sh install/install.sh
-          \`\`\`
+          ezra --version
+          ```
 
-          ### macOS
-          \`\`\`bash
+          ### Other Linux (tar.gz)
+          ```bash
           sh install/install.sh
-          \`\`\`
-
-          ### VS Code Extension
-          Install \`ezra-lang-1.0.0-vscode.vsix\` from VS Code → Extensions → ··· → Install from VSIX.
+          ```
 
           ---
 
-          ## Verify checksums
-          \`\`\`
-          $(cat dist/SHA256SUMS)
-          \`\`\`
+          ## macOS Install
+
+          ### Option 1 — .pkg installer (double-click)
+          Download `ezra-macos-aarch64-1.0.0.pkg` (Apple Silicon) or
+          `ezra-macos-x86_64-1.0.0.pkg` (Intel) and double-click.
+
+          ### Option 2 — Script
+          ```bash
+          sh install/install.sh
+          ```
 
           ---
-          *Test suite: 55/55 passing · Zero clippy warnings · Zero unsafe code*
+
+          ## VS Code Extension
+          1. Download `ezra-lang-1.0.0-vscode.vsix`
+          2. VS Code → Extensions → `···` → Install from VSIX
+          3. Open any `.ez` file — syntax highlighting works!
+          4. Press `Ctrl+R` to run
+
+          ---
+
+          ## Quick Start (after install)
+          ```
+          ezra --version
+          ezra new my_app
+          cd my_app
+          ezra run
+          ```
+
+          Docs: https://ranaji114.github.io/Flux-programming-lang
           EOF
-          echo "notes_written=true" >> "$GITHUB_OUTPUT"
 
       - uses: softprops/action-gh-release@v2
         with:
@@ -374,6 +523,7 @@ jobs:
             dist/*.zip
             dist/*.tar.gz
             dist/*.deb
+            dist/*.pkg
             dist/*.exe
             dist/*.vsix
             dist/SHA256SUMS
