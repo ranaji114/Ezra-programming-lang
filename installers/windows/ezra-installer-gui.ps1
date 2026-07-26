@@ -251,12 +251,31 @@ $installBtn.Add_Click({
         }
         $progressBar.Value = 88
 
-        # Step 6: Download VSIX if requested
+        # Step 6: Download and auto-install VSIX if requested
         if ($vsCodeCheck.Checked -and $vsixAsset) {
             Log("Downloading VS Code extension...")
             $vsixPath = Join-Path $installDir "ezra-lang-$VERSION.vsix"
             Invoke-WebRequest $vsixAsset.browser_download_url -OutFile $vsixPath
             Log("VSIX saved: $vsixPath")
+
+            # Try to auto-install into VS Code
+            $codeCmd = $null
+            foreach ($c in @("code", "code-insiders", "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd")) {
+                if (Get-Command $c -ErrorAction SilentlyContinue) { $codeCmd = $c; break }
+                if (Test-Path $c) { $codeCmd = $c; break }
+            }
+
+            if ($codeCmd) {
+                Log("Installing extension into VS Code...")
+                $proc = Start-Process $codeCmd -ArgumentList "--install-extension `"$vsixPath`" --force" -Wait -PassThru -WindowStyle Hidden
+                if ($proc.ExitCode -eq 0) {
+                    Log("VS Code extension installed automatically!")
+                } else {
+                    Log("Manual install: VS Code -> Extensions -> ... -> Install from VSIX -> $vsixPath")
+                }
+            } else {
+                Log("VS Code not found. Manual install: Extensions -> ... -> Install from VSIX -> $vsixPath")
+            }
         }
         $progressBar.Value = 95
 
@@ -276,8 +295,18 @@ $installBtn.Add_Click({
         $msg += "  ezra --version`r`n"
         $msg += "  ezra new my_app`r`n`r`n"
         if ($vsCodeCheck.Checked -and $vsixAsset) {
-            $msg += "VS Code extension saved to:`r`n$installDir\ezra-lang-$VERSION.vsix`r`n"
-            $msg += "Install it: VS Code -> Extensions -> ... -> Install from VSIX`r`n`r`n"
+            # Check if extension was auto-installed
+            $extInstalled = Test-Path "$env:USERPROFILE\.vscode\extensions\ankur-rana.ezra-lang-*"
+            if ($extInstalled) {
+                $msg += "VS Code Extension: INSTALLED automatically`r`n"
+                $msg += "  Open any .ez file -> syntax highlighting works!`r`n"
+                $msg += "  Press Ctrl+R to run your program`r`n`r`n"
+            } else {
+                $vsixSaved = Join-Path $installDir "ezra-lang-$VERSION.vsix"
+                $msg += "VS Code Extension: saved to`r`n"
+                $msg += "  $vsixSaved`r`n"
+                $msg += "  Install: VS Code -> Extensions -> ... -> Install from VSIX`r`n`r`n"
+            }
         }
         $msg += "Docs: https://ranaji114.github.io/Flux-programming-lang"
 
