@@ -1,57 +1,37 @@
 # Ezra
 
-Ezra is a readable, indentation-based scripting language built in Rust.
+**A readable scripting language built in Rust.**
 
-**Created by [Ankur Rana](https://github.com/ranaji114)**  
-**Version:** 1.0.0  
-**Repository:** https://github.com/ranaji114/Flux-programming-lang  
-**Docs:** https://ranaji114.github.io/Flux-programming-lang
+**Created by [Ankur Rana](https://github.com/ranaji114)**
 
----
-
-## Why Ezra?
-
-Ezra is designed for scripting that reads close to plain language:
-
-```ezra
-name is input "Enter your name: "
-age is input_number "Enter your age: "
-
-check if age >= 18
-  say "Hello {name}, you are an adult."
-otherwise
-  say "Hello {name}, you are a minor."
-```
+[![Release](https://img.shields.io/github/v/release/ranaji114/Flux-programming-lang?label=version&color=blueviolet)](https://github.com/ranaji114/Flux-programming-lang/releases/latest)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-55%2F55-brightgreen)](#)
 
 ---
 
 ## Install
 
-### Windows
+### Windows — One Command
+
+Open PowerShell and run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File install/install.ps1
+powershell -ExecutionPolicy Bypass -File install\install.ps1
 ```
 
-### Linux and macOS
+Or download the zip directly from [GitHub Releases](https://github.com/ranaji114/Flux-programming-lang/releases/latest), extract it, and add the folder to your PATH.
+
+### Linux / macOS
 
 ```bash
 sh install/install.sh
 ```
 
-### From Source (requires Rust)
+### Verify
 
 ```bash
-git clone https://github.com/ranaji114/Flux-programming-lang
-cd Flux-programming-lang
-cargo build --release
-# binary at: target/release/ezra
-```
-
-Verify:
-
-```bash
-ezra --version    # ezra 1.0.0
+ezra --version   # ezra 1.0.0
 ```
 
 ---
@@ -59,107 +39,115 @@ ezra --version    # ezra 1.0.0
 ## Quick Start
 
 ```bash
-ezra new hello_app
-cd hello_app
+ezra new my_app
+cd my_app
 ezra run
 ```
 
-Or run a single file:
+First program (`src/main.ez`):
 
-```bash
-ezra run examples/hello.ez
+```ezra
+name is input "Your name: "
+say "Hello {name}!"
 ```
 
 ---
 
 ## Language at a Glance
 
-| Feature | Example |
+```ezra
+# Variables
+name is "Rana"
+age  is 25
+
+# Conditions
+check if age >= 18
+  say "Adult"
+otherwise
+  say "Minor"
+
+# Functions
+give add(a, b)
+  -> a + b
+
+say add(3, 4)   # 7
+
+# Lists + higher-order
+nums   is [1, 2, 3, 4, 5]
+evens  is nums.filter(n -> n % 2 is 0)
+say evens   # [2, 4]
+
+# Error handling
+try
+  result is 10 / 0
+catch err
+  say "Caught: {err}"
+
+# JSON
+data is { name: "Ezra", version: 1 }
+say stringify_json(data)
+```
+
+---
+
+## CLI Commands
+
+| Command | Description |
 |---|---|
-| Variables | `name is "Rana"` |
-| Conditions | `check if age >= 18 ... otherwise ...` |
-| Loops | `for each item in list`, `repeat 5 times`, `while`, `until` |
-| Functions | `give add(a, b) -> a + b` |
-| Error handling | `try ... catch err ... finally` |
-| Pattern matching | `pick value when "x" ... otherwise` |
-| Text interpolation | `"Hello {name.upper()}"` |
-| Lists | `[1, 2, 3].sort()`, `.filter(n -> n > 2)` |
-| Objects | `{name: "Rana", age: 25}.keys()` |
-| Modules | `use "std/math" as math` |
-| File I/O | `write_file("out.txt", "hello")` |
-| JSON | `parse_json(s)`, `stringify_json(v)` |
+| `ezra run [file.ez]` | Run a program |
+| `ezra new <name>` | Create a new project |
+| `ezra check [file.ez]` | Parse without running |
+| `ezra test [path]` | Run test files |
+| `ezra fmt [path]` | Format source files |
+| `ezra lint [path]` | Lint source files |
+| `ezra repl` | Interactive shell |
+| `ezra --version` | Print version |
 
 ---
 
-## CLI
+## IDE Support
 
-```
-ezra new <project-name>     Create a new project
-ezra run [file.ez]          Run a source file
-ezra check [file.ez]        Parse without running
-ezra test [path]            Run test files (*_test.ez)
-ezra fmt [path] [--check]   Format .ez files
-ezra lint [path]            Lint .ez files
-ezra build [project-dir]    Validate project structure
-ezra repl                   Interactive REPL
-ezra --version              Print version
-```
+### VS Code
+Install the extension — search **"Ezra Language"** in Extensions, or install the VSIX from [Releases](https://github.com/ranaji114/Flux-programming-lang/releases/latest).
 
----
+Features: syntax highlighting, Ezra Neon theme, 30+ snippets, run/check/lint/format commands, LSP (diagnostics, hover, completions, go-to-definition).
 
-## VS Code Extension
-
-The VS Code extension provides `.ez` syntax highlighting, snippets,
-run/check/lint/format commands, REPL integration, and the Flux Neon color theme.
+### Vim / Neovim
 
 ```bash
-cd vscode-extension/flux
-npm install
-npm run package
-# Install the generated .vsix from VS Code > Extensions > Install from VSIX
+cp editor-support/vim/syntax/ezra.vim   ~/.vim/syntax/
+cp editor-support/vim/ftdetect/ezra.vim ~/.vim/ftdetect/
+cp editor-support/vim/indent/ezra.vim   ~/.vim/indent/
 ```
 
 ---
 
 ## Documentation
 
-| Doc | Link |
+📚 **https://ranaji114.github.io/Flux-programming-lang**
+
+| Section | Link |
 |---|---|
-| Homepage | [docs/index.md](docs/index.md) |
-| Getting Started | [docs/getting-started.md](docs/getting-started.md) |
 | Tutorial | [docs/tutorial.md](docs/tutorial.md) |
 | Language Reference | [docs/language-reference.md](docs/language-reference.md) |
-| CLI Reference | [docs/cli-reference.md](docs/cli-reference.md) |
 | Standard Library | [docs/stdlib/index.md](docs/stdlib/index.md) |
-| Examples | [docs/examples/index.md](docs/examples/index.md) |
-| Tooling & VS Code | [docs/tooling.md](docs/tooling.md) |
-| Contributing | [docs/contributing.md](docs/contributing.md) |
+| CLI Reference | [docs/cli-reference.md](docs/cli-reference.md) |
 
 ---
 
-## Development
+## Build from Source
+
+Requires [Rust](https://rustup.rs/) (stable):
 
 ```bash
-cargo fmt -- --check        # check formatting
-cargo clippy                # lint (no errors expected)
-cargo test                  # 25 unit + 6 CLI smoke tests
-cargo build --release       # release binary
-```
-
-Build and package locally (Windows):
-
-```powershell
-.\build.ps1 --all
-```
-
-Build and package locally (Linux/macOS):
-
-```bash
-./build.sh --all
+git clone https://github.com/ranaji114/Flux-programming-lang
+cd Flux-programming-lang
+cargo build --release
+# Binary: target/release/ezra
 ```
 
 ---
 
 ## License
 
-MIT
+MIT — Created by Ankur Rana

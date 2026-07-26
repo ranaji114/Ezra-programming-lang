@@ -1,4 +1,4 @@
-use std::env;
+﻿use std::env;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -68,7 +68,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
             Ok(())
         }
         Some("--version") | Some("-V") => {
-            println!("ezra 0.1.0");
+            println!("ezra 1.0.0");
             Ok(())
         }
         Some("--help") | Some("-h") | None => {
@@ -80,7 +80,7 @@ fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_help() {
-    println!("Ezra 0.1.0 — a readable scripting language");
+    println!("Ezra 1.0.0 — a readable scripting language");
     println!();
     println!("Usage:");
     println!("  ezra new <project-name>");
@@ -189,7 +189,7 @@ fn build_project(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     fs::write(
         build_dir.join("manifest.txt"),
         format!(
-            "Ezra build\nproject={}\nentry={}\nversion=0.1.0\n",
+            "Ezra build\nproject={}\nentry={}\nversion=1.0.0\n",
             root.display(),
             main_file.display()
         ),
@@ -204,7 +204,7 @@ fn build_project(path: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn run_repl() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Ezra REPL 0.1.0");
+    println!("Ezra REPL 1.0.0");
     println!("Type `exit` or press Ctrl+C to quit.");
 
     let stdin = io::stdin();
@@ -266,7 +266,7 @@ fn create_project(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     fs::write(
         root.join("ezra.toml"),
         format!(
-            "[package]\nname = \"{name}\"\nversion = \"0.1.0\"\nedition = \"2025\"\n\n[dependencies]\n"
+            "[package]\nname = \"{name}\"\nversion = \"1.0.0\"\nedition = \"2025\"\n\n[dependencies]\n"
         ),
     )?;
 
