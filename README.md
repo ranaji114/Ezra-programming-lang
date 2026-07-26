@@ -20,7 +20,11 @@ Open PowerShell and run:
 powershell -ExecutionPolicy Bypass -File install\install.ps1
 ```
 
-Or download the zip directly from [GitHub Releases](https://github.com/ranaji114/Flux-programming-lang/releases/latest), extract it, and add the folder to your PATH.
+Or download **[EzraSetup-1.0.0.exe](https://github.com/ranaji114/Flux-programming-lang/releases/latest)** and double-click.
+
+> ⚠️ **Windows SmartScreen warning?** This is normal for unsigned open-source software.
+> Click **"More info"** → **"Run anyway"**. The code is fully open-source and safe.
+> Source: https://github.com/ranaji114/Flux-programming-lang
 
 ### Linux / macOS
 
