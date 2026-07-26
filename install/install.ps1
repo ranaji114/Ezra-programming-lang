@@ -1,16 +1,16 @@
-# Ezra Language - Windows Installer
+# Ezra Language - Windows One-Click Installer
 # Author: Ankur Rana
-# Usage: powershell -ExecutionPolicy Bypass -File install\install.ps1
+# Usage: powershell -ExecutionPolicy Bypass -File install.ps1
+# Or run directly from web: iwr https://raw.githubusercontent.com/ranaji114/Flux-programming-lang/main/install/install.ps1 | iex
 
 param(
-    [string]$Repo = "ranaji114/Flux-programming-lang",
-    [string]$Version = "latest",
+    [string]$Version = "1.0.0",
     [string]$InstallDir = "",
     [switch]$Silent
 )
 
 $ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"
+$ProgressPreference    = "SilentlyContinue"
 
 if ($InstallDir -eq "") {
     $InstallDir = Join-Path $env:LOCALAPPDATA "Ezra\bin"
@@ -18,78 +18,118 @@ if ($InstallDir -eq "") {
 
 function Write-Step($msg) { if (-not $Silent) { Write-Host "  >> $msg" -ForegroundColor Cyan } }
 function Write-Ok($msg)   { if (-not $Silent) { Write-Host "  OK $msg" -ForegroundColor Green } }
-function Write-Fail($msg) { Write-Host "  FAIL $msg" -ForegroundColor Red }
+function Write-Fail($msg) { Write-Host "  FAIL $msg" -ForegroundColor Red; exit 1 }
 
 if (-not $Silent) {
     Write-Host ""
-    Write-Host "  Ezra Language Installer" -ForegroundColor Magenta
+    Write-Host "  Ezra Language Installer v$Version" -ForegroundColor Magenta
     Write-Host "  Created by Ankur Rana" -ForegroundColor Gray
-    Write-Host "  https://github.com/ranaji114/Flux-programming-lang" -ForegroundColor Gray
     Write-Host ""
 }
 
-$assetName = "ezra-windows-x86_64-1.0.0.zip"
+# Download URL - direct link to the zip asset
+$Repo = "ranaji114/Flux-programming-lang"
+$AssetName = "ezra-windows-x86_64-$Version.zip"
 
-if ($Version -eq "latest") {
-    $releaseApi = "https://api.github.com/repos/$Repo/releases/latest"
-} else {
-    $releaseApi = "https://api.github.com/repos/$Repo/releases/tags/v$Version"
-}
-
-Write-Step "Fetching release info from GitHub..."
+# Try GitHub Releases API first
+$DownloadUrl = ""
+Write-Step "Finding release on GitHub..."
 
 try {
     $headers = @{ "User-Agent" = "ezra-installer/1.0" }
-    $release = Invoke-RestMethod -Uri $releaseApi -Headers $headers
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/tags/v$Version" -Headers $headers
+    foreach ($a in $release.assets) {
+        if ($a.name -eq $AssetName) {
+            $DownloadUrl = $a.browser_download_url
+            break
+        }
+    }
 } catch {
-    Write-Fail "Cannot reach GitHub. Check your internet connection."
+    # Fallback: try latest release
+    try {
+        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
+        foreach ($a in $release.assets) {
+            if ($a.name -like "ezra-windows-x86_64-*.zip") {
+                $DownloadUrl = $a.browser_download_url
+                $AssetName   = $a.name
+                break
+            }
+        }
+    } catch {
+        Write-Fail "Cannot reach GitHub. Check your internet and try again."
+    }
+}
+
+if ($DownloadUrl -eq "") {
     Write-Host ""
-    Write-Host "  Download manually from:" -ForegroundColor Yellow
-    Write-Host "  https://github.com/$Repo/releases/latest" -ForegroundColor Yellow
+    Write-Host "  Release assets not found on GitHub yet." -ForegroundColor Yellow
+    Write-Host "  Check: https://github.com/$Repo/releases" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Manual install steps:" -ForegroundColor Cyan
+    Write-Host "  1. Go to: https://github.com/$Repo/releases" -ForegroundColor White
+    Write-Host "  2. Download: $AssetName" -ForegroundColor White
+    Write-Host "  3. Extract ezra.exe to a folder in your PATH" -ForegroundColor White
+    Write-Host ""
     exit 1
 }
 
-$asset = $null
-foreach ($a in $release.assets) {
-    if ($a.name -eq $assetName) { $asset = $a; break }
-}
-
-if ($null -eq $asset) {
-    Write-Fail "Asset '$assetName' not found in release $($release.tag_name)"
-    Write-Host "  NOTE: GitHub Actions must complete the release build first." -ForegroundColor Yellow
-    Write-Host "  Check: https://github.com/$Repo/actions" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  Available assets:" -ForegroundColor Yellow
-    foreach ($a in $release.assets) { Write-Host "    $($a.name)" }
-    exit 1
-}
-
-$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ezra-install-" + [System.Guid]::NewGuid().ToString())
+# Download
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ezra-" + [System.Guid]::NewGuid().ToString("N").Substring(0,8))
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 
 try {
-    $zipPath = Join-Path $tmp $assetName
-    $sizeMB = [math]::Round($asset.size / 1048576, 1)
-    Write-Step "Downloading $assetName ($sizeMB MB)..."
-    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zipPath
+    $zipPath = Join-Path $tmp $AssetName
+    Write-Step "Downloading $AssetName..."
+    Invoke-WebRequest -Uri $DownloadUrl -OutFile $zipPath
 
+    # Verify download
+    if (-not (Test-Path $zipPath) -or (Get-Item $zipPath).Length -lt 1000) {
+        Write-Fail "Download failed or file is too small."
+    }
+
+    # Extract
     Write-Step "Installing to $InstallDir..."
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-    Expand-Archive -Path $zipPath -DestinationPath $InstallDir -Force
+    Expand-Archive -Path $zipPath -DestinationPath $tmp -Force
 
+    # Copy ezra.exe and ezra-lsp.exe
+    $exeSrc = Join-Path $tmp "ezra.exe"
+    $lspSrc = Join-Path $tmp "ezra-lsp.exe"
+
+    if (-not (Test-Path $exeSrc)) {
+        Write-Fail "ezra.exe not found in archive. Archive may be corrupted."
+    }
+
+    Copy-Item $exeSrc (Join-Path $InstallDir "ezra.exe") -Force
+    if (Test-Path $lspSrc) {
+        Copy-Item $lspSrc (Join-Path $InstallDir "ezra-lsp.exe") -Force
+    }
+
+    # Copy std library
+    $stdSrc = Join-Path $tmp "std"
+    $stdDst = Join-Path (Split-Path $InstallDir -Parent) "std"
+    if (Test-Path $stdSrc) {
+        Copy-Item $stdSrc $stdDst -Recurse -Force
+    }
+
+    # Copy examples
+    $examplesSrc = Join-Path $tmp "examples"
+    $examplesDst = Join-Path (Split-Path $InstallDir -Parent) "examples"
+    if (Test-Path $examplesSrc) {
+        Copy-Item $examplesSrc $examplesDst -Recurse -Force
+    }
+
+    # Add to PATH
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
     if ($null -eq $userPath) { $userPath = "" }
     $pathParts = $userPath -split ";" | Where-Object { $_ -ne "" }
 
-    $alreadyInPath = $false
+    $alreadyIn = $false
     foreach ($p in $pathParts) {
-        if ($p.TrimEnd("\") -eq $InstallDir.TrimEnd("\")) {
-            $alreadyInPath = $true
-            break
-        }
+        if ($p.TrimEnd("\") -eq $InstallDir.TrimEnd("\")) { $alreadyIn = $true; break }
     }
 
-    if (-not $alreadyInPath) {
+    if (-not $alreadyIn) {
         $newPath = ($pathParts + $InstallDir) -join ";"
         [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
         Write-Ok "Added to PATH"
@@ -97,20 +137,27 @@ try {
         Write-Ok "Already in PATH"
     }
 
+    # Broadcast PATH change so new terminals pick it up
     $env:PATH = $env:PATH + ";" + $InstallDir
 
-    $exePath = Join-Path $InstallDir "ezra.exe"
-    if (Test-Path $exePath) {
-        $v = & $exePath --version 2>&1
-        Write-Ok "Installed: $v"
-    } else {
-        Write-Host "  WARNING: ezra.exe not found at $exePath" -ForegroundColor Yellow
-    }
+    # Verify
+    $ezraExe = Join-Path $InstallDir "ezra.exe"
+    $v = & $ezraExe --version 2>&1
+    Write-Ok "Installed: $v"
 
     if (-not $Silent) {
         Write-Host ""
-        Write-Host "  Ezra installed!" -ForegroundColor Green
-        Write-Host "  Restart your terminal, then run: ezra --version" -ForegroundColor White
+        Write-Host "  Ezra installed successfully!" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "  Installed to: $InstallDir" -ForegroundColor White
+        Write-Host "  Restart your terminal, then run:" -ForegroundColor White
+        Write-Host ""
+        Write-Host "    ezra --version" -ForegroundColor Yellow
+        Write-Host "    ezra new my_app" -ForegroundColor Yellow
+        Write-Host "    cd my_app" -ForegroundColor Yellow
+        Write-Host "    ezra run" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  Docs: https://ranaji114.github.io/Flux-programming-lang" -ForegroundColor Cyan
         Write-Host ""
     }
 
