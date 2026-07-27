@@ -1,4 +1,4 @@
-# Flux Tooling and VS Code
+﻿# Ezra Tooling and VS Code
 
 This guide covers the tools around the Flux interpreter.
 
@@ -15,7 +15,7 @@ powershell -ExecutionPolicy Bypass -File install/install.ps1
 Restart the terminal, then verify:
 
 ~~~powershell
-flux --version
+ezra --version
 ~~~
 
 The installer downloads the Windows x86_64 release and adds its install
@@ -25,7 +25,7 @@ directory to the user PATH.
 
 ~~~bash
 sh install/install.sh
-flux --version
+ezra --version
 ~~~
 
 The Unix installer installs into the user local binary directory. Ensure that
@@ -36,7 +36,7 @@ directory is in PATH.
 Flux development requires Rust and Cargo:
 
 ~~~bash
-cargo run -- run examples/hello.flux
+cargo run -- run examples/hello.ez
 ~~~
 
 Useful source checks:
@@ -50,18 +50,18 @@ cargo build
 
 ## Project Structure
 
-A project created by flux new looks like this:
+A project created by ezra new looks like this:
 
 ~~~text
 my_app/
-  flux.toml
+  ezra.toml
   src/
-    main.flux
+    main.ez
   tests/
-    main_test.flux
+    main_test.ez
 ~~~
 
-The current CLI uses src/main.flux as the default entry point. The flux.toml
+The current CLI uses src/main.ez as the default entry point. The ezra.toml
 file stores package metadata, but dependency resolution and package commands
 are not implemented yet.
 
@@ -70,8 +70,8 @@ A larger repository may also contain:
 ~~~text
 examples/       runnable example programs
 docs/           language and tool documentation
-build/          generated manifest from flux build
-target/         Rust build output; ignored by Flux file collection
+build/          generated manifest from ezra build
+target/         Rust build output; ignored by Ezra file collection
 ~~~
 
 ## Formatting
@@ -79,19 +79,19 @@ target/         Rust build output; ignored by Flux file collection
 Run the formatter on a file:
 
 ~~~bash
-flux fmt src/main.flux
+ezra fmt src/main.ez
 ~~~
 
 Run it over a project:
 
 ~~~bash
-flux fmt .
+ezra fmt .
 ~~~
 
 Check without modifying files:
 
 ~~~bash
-flux fmt . --check
+ezra fmt . --check
 ~~~
 
 The current formatter normalizes line endings, removes trailing whitespace,
@@ -106,8 +106,8 @@ expressions.
 Run the linter on one file or a directory:
 
 ~~~bash
-flux lint src/main.flux
-flux lint .
+ezra lint src/main.ez
+ezra lint .
 ~~~
 
 The linter reports long lines, trailing whitespace, missing final newlines,
@@ -116,41 +116,41 @@ reported but do not fail the command.
 
 ## Testing
 
-Flux test discovery is filename-based. In a tests directory, only files whose
+ezra test discovery is filename-based. In a tests directory, only files whose
 stem ends with _test are selected:
 
 ~~~text
 tests/
-  calculator_test.flux
-  strings_test.flux
-  sample.flux
+  calculator_test.ez
+  strings_test.ez
+  sample.ez
 ~~~
 
-calculator_test.flux and strings_test.flux run with flux test. sample.flux is
+calculator_test.ez and strings_test.ez run with ezra test. sample.ez is
 ignored when the directory is passed.
 
-A test file is a normal Flux program. It passes when it finishes without a
+A test file is a normal Ezra program. It passes when it finishes without a
 syntax or runtime error. There is no built-in assert statement yet, so a test
 can use conditional logic and deliberate runtime failures when needed.
 
 Run all tests:
 
 ~~~bash
-flux test
+ezra test
 ~~~
 
 Run one test file:
 
 ~~~bash
-flux test tests/calculator_test.flux
+ezra test tests/calculator_test.ez
 ~~~
 
 ## Build Validation
 
-flux build checks that src/main.flux parses and writes build/manifest.txt:
+ezra build checks that src/main.ez parses and writes build/manifest.txt:
 
 ~~~bash
-flux build .
+ezra build .
 ~~~
 
 This is a validation and metadata step. It is not a compiler and does not
@@ -161,19 +161,19 @@ produce a native executable.
 Start the REPL:
 
 ~~~bash
-flux repl
+ezra repl
 ~~~
 
 The REPL evaluates one input line at a time and preserves variables between
 lines. Use exit, quit, or Ctrl+C to leave. Multi-line blocks should be saved in
-a .flux file.
+a .ez file.
 
 ## VS Code Extension
 
 The repository includes a VS Code extension under
 vscode-extension/flux. It contributes:
 
-- Flux language detection for .flux and .flx files
+- Flux language detection for .ez and .flx files
 - syntax highlighting
 - snippets
 - Flux: Run File
@@ -202,9 +202,9 @@ In VS Code:
 4. Select the generated flux-0.1.0.vsix file.
 5. Reload the VS Code window.
 
-### Run a Flux File
+### Run an Ezra file
 
-Open a file ending in .flux. Confirm that the language mode in the lower-right
+Open a file ending in .ez. Confirm that the language mode in the lower-right
 corner says Flux. Then use any of these:
 
 - the Run button in the editor title
@@ -226,7 +226,7 @@ Flux: Open REPL
 Flux: New Project
 ~~~
 
-### Flux Neon Theme
+### Ezra Neon Theme
 
 Open the Command Palette and choose Preferences: Color Theme. Select Flux
 Neon for the Flux-specific dark editor colors.
@@ -238,13 +238,13 @@ The extension supports:
 | Setting | Meaning |
 | --- | --- |
 | flux.path | Path to the Flux executable |
-| flux.runOnSave | Run the active Flux file after saving when true |
+| flux.runOnSave | Run the active Ezra file after saving when true |
 
 Example settings:
 
 ~~~json
 {
-  "flux.path": "flux",
+  "flux.path": "ezra",
   "flux.runOnSave": false
 }
 ~~~
@@ -256,7 +256,7 @@ side effects.
 
 ### File Is Plain Text
 
-Open a .flux file and select Flux from the language mode picker in the
+Open a .ez file and select Flux from the language mode picker in the
 lower-right corner. Confirm that the extension is installed and reload the
 window.
 
@@ -269,7 +269,7 @@ installer uses:
 %LOCALAPPDATA%\Flux\bin\flux.exe
 ~~~
 
-On a terminal, verify the executable with flux --version.
+On a terminal, verify the executable with ezra --version.
 
 ### Unexpected Character at 1:1
 
@@ -293,7 +293,7 @@ terminal. Type the requested value and press Enter.
 Run:
 
 ~~~bash
-flux check path/to/file.flux
+ezra check path/to/file.ez
 ~~~
 
 The command reports the first parser error with a line and column. Also check

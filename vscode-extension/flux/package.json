@@ -11,12 +11,12 @@
   "icon": "icons/flux-icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ranaji114/Flux-programming-lang.git"
+    "url": "https://github.com/ranaji114/Ezra-programming-lang.git"
   },
   "bugs": {
-    "url": "https://github.com/ranaji114/Flux-programming-lang/issues"
+    "url": "https://github.com/ranaji114/Ezra-programming-lang/issues"
   },
-  "homepage": "https://ranaji114.github.io/Flux-programming-lang",
+  "homepage": "https://ranaji114.github.io/Ezra-programming-lang",
   "license": "MIT",
   "engines": {
     "vscode": "^1.75.0"

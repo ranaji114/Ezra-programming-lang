@@ -1,4 +1,4 @@
-# Contributing to Ezra
+﻿# Contributing to Ezra
 
 Thanks for your interest in contributing. This page covers how to build
 the project, run tests, and submit changes.
@@ -19,7 +19,7 @@ For the VS Code extension:
 ## Build from Source
 
 ```bash
-git clone https://github.com/ranaji114/Flux-programming-lang
+git clone https://github.com/ranaji114/Ezra-programming-lang
 cd Flux-programming-lang
 cargo build
 ```

@@ -1,15 +1,15 @@
-# Flux Language Reference
+﻿# Ezra Language Reference
 
-This reference documents the behavior implemented by Flux `v0.1.0-alpha`.
+This reference documents the behavior implemented by Ezra `v1.0.0`.
 
 ## Source Files and Indentation
 
-Flux source files normally use the `.flux` extension and are UTF-8 text. A
+Ezra source files normally use the `.ez` extension and are UTF-8 text. A
 UTF-8 byte-order mark at the start of a file is accepted.
 
 Flux uses indentation to define blocks:
 
-~~~flux
+~~~ezra
 check if ready
   say "The block is indented"
 ~~~
@@ -21,7 +21,7 @@ the recommended style, although the parser accepts any larger child indent.
 
 Use `#` or `//` for a line comment:
 
-~~~flux
+~~~ezra
 # A full-line comment
 say "Hello" # An inline comment
 say "World" // Another comment
@@ -35,7 +35,7 @@ Block comments are not part of the current language.
 An identifier starts with an ASCII letter or `_`, followed by ASCII letters,
 digits, or `_`:
 
-~~~flux
+~~~ezra
 user_name is "Rana"
 item2 is 10
 ~~~
@@ -78,7 +78,7 @@ object keys, and functions that finish without returning a value.
 
 Text literals use double quotes:
 
-~~~flux
+~~~ezra
 message is "Hello, Flux"
 ~~~
 
@@ -89,8 +89,8 @@ quote, and `\\\\` for a backslash. Unknown escapes keep the escaped character.
 
 Expressions can be evaluated inside braces:
 
-~~~flux
-name is "Flux"
+~~~ezra
+name is "ezra"
 count is 3
 say "{name} has {count} examples"
 say "Uppercase: {name.upper()}"
@@ -103,7 +103,7 @@ is a runtime error.
 
 Numbers may be integers or decimal numbers:
 
-~~~flux
+~~~ezra
 whole is 42
 decimal is 3.14
 negative is -7
@@ -116,7 +116,7 @@ literals are not supported by the current lexer.
 
 Create a list with square brackets. Values may have different types:
 
-~~~flux
+~~~ezra
 values is [1, "two", yes, nothing]
 numbers is [10, 20, 30]
 say numbers[0]
@@ -131,7 +131,7 @@ list.
 
 Create an object with comma-separated `key: value` fields:
 
-~~~flux
+~~~ezra
 person is {
   name: "Rana",
   age: 25
@@ -141,7 +141,7 @@ person is {
 Keys can be identifiers or text literals. Access fields with dot notation or a
 text key:
 
-~~~flux
+~~~ezra
 say person.name
 say person["age"]
 say person.missing # nothing
@@ -167,14 +167,14 @@ true.
 
 Use `is` to create or update a variable:
 
-~~~flux
+~~~ezra
 total is 10
 total is total + 5
 ~~~
 
 Compound assignment is available:
 
-~~~flux
+~~~ezra
 total += 2
 total -= 1
 total *= 3
@@ -191,14 +191,14 @@ There is no separate `let` or `const` declaration in this release. A single
 
 `say` prints a value followed by a newline:
 
-~~~flux
+~~~ezra
 say "Hello"
 say 2 + 3
 ~~~
 
 `write` prints without a newline. `print` is an alias for `write`:
 
-~~~flux
+~~~ezra
 write "Loading... "
 print "done"
 ~~~
@@ -207,7 +207,7 @@ print "done"
 `error: ...` to standard error. They do not automatically stop the program.
 `debug` writes `debug: ...` to standard error:
 
-~~~flux
+~~~ezra
 warn "This is a warning"
 fail "This is an error-style message"
 debug "Diagnostic information"
@@ -216,7 +216,7 @@ debug "Diagnostic information"
 `clear` sends an ANSI terminal-clear sequence. Terminal support determines
 how it appears:
 
-~~~flux
+~~~ezra
 clear
 ~~~
 
@@ -225,7 +225,7 @@ clear
 `input` reads text from standard input. `input_number` reads text and converts
 it to a number:
 
-~~~flux
+~~~ezra
 name is input "Name: "
 age is input_number "Age: "
 say "Hello {name}; next year: {age + 1}"
@@ -238,7 +238,7 @@ Invalid numeric input is a runtime error.
 Use `check if` with an indented body. `otherwise if` and `otherwise` are
 optional:
 
-~~~flux
+~~~ezra
 check if score >= 90
   say "A"
 otherwise if score >= 75
@@ -255,7 +255,7 @@ Conditions use truthiness, so the condition does not have to be a Boolean.
 
 `repeat` evaluates its count once and runs the body that many times:
 
-~~~flux
+~~~ezra
 repeat 5 times
   say "tick"
 ~~~
@@ -266,7 +266,7 @@ The count must be a non-negative whole number.
 
 `for each` requires a list and binds one item per iteration:
 
-~~~flux
+~~~ezra
 items is ["a", "b", "c"]
 for each item in items
   say item
@@ -279,7 +279,7 @@ iteration. Using either outside a loop is a runtime error.
 
 Define a named function with `give`:
 
-~~~flux
+~~~ezra
 give multiply(a, b)
   return a * b
 
@@ -288,7 +288,7 @@ result is multiply(4, 5)
 
 `-> expression` is shorthand for `return expression`:
 
-~~~flux
+~~~ezra
 give square(value)
   -> value * value
 ~~~
@@ -356,7 +356,7 @@ From highest to lowest:
 
 Use parentheses for explicit grouping:
 
-~~~flux
+~~~ezra
 value is (2 + 3) * 4
 ~~~
 
@@ -364,8 +364,8 @@ value is (2 + 3) * 4
 
 Lists and text support numeric indexing and `.length`:
 
-~~~flux
-word is "Flux"
+~~~ezra
+word is "ezra"
 letters is ["F", "l", "u", "x"]
 say word[0]
 say word.length
@@ -375,7 +375,7 @@ say letters.length
 Text indexing is by character, not byte. Objects support dot properties and
 text-key indexing:
 
-~~~flux
+~~~ezra
 config is { mode: "dev", retries: 3 }
 say config.mode
 say config["retries"]
@@ -394,8 +394,8 @@ Missing properties return `nothing`.
 
 Examples:
 
-~~~flux
-say len("Flux")
+~~~ezra
+say len("ezra")
 say len([1, 2, 3])
 say type_of(yes)
 say text(42)
@@ -424,7 +424,7 @@ runtime error when conversion fails.
 | `.take(count)` | non-negative whole number | First values in a new list |
 | `.drop(count)` | non-negative whole number | Remaining values in a new list |
 
-~~~flux
+~~~ezra
 items is [1, 2, 3]
 items is items.push(4)
 say items.take(2)

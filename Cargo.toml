@@ -1,12 +1,12 @@
-[package]
+﻿[package]
 name = "ezra"
 version = "1.0.0"
 edition = "2021"
 description = "Ezra — a readable scripting language built in Rust"
 authors = ["Ankur Rana"]
 license = "MIT"
-repository = "https://github.com/ranaji114/Flux-programming-lang"
-homepage = "https://ranaji114.github.io/Flux-programming-lang"
+repository = "https://github.com/ranaji114/Ezra-programming-lang"
+homepage = "https://ranaji114.github.io/Ezra-programming-lang"
 keywords = ["language", "interpreter", "scripting", "ezra"]
 categories = ["command-line-utilities", "development-tools"]
 

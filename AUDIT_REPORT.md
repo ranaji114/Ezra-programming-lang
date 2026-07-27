@@ -1,10 +1,10 @@
-# Ezra Language — Production Readiness Audit Report
+﻿# Ezra Language — Production Readiness Audit Report
 
 **Version:** 0.1.0  
 **Audit Date:** 2026-07-25  
 **Binary:** `ezra` (`.ez` source files)  
 **Language:** Readable, indentation-based scripting language built in Rust  
-**Repo:** https://github.com/ranaji114/Flux-programming-lang  
+**Repo:** https://github.com/ranaji114/Ezra-programming-lang  
 **Test Suite:** 46 total (30 unit + 6 CLI smoke + 10 edge-case) — **all passing**
 
 ---

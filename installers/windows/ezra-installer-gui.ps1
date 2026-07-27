@@ -1,4 +1,4 @@
-#requires -version 5.1
+﻿#requires -version 5.1
 # Ezra Language - Windows GUI Installer
 # Author: Ankur Rana
 # Converts to .exe with: ps2exe ezra-installer-gui.ps1 EzraSetup-1.0.0.exe
@@ -6,7 +6,7 @@
 param([switch]$Silent)
 
 $VERSION     = "1.0.0"
-$REPO        = "ranaji114/Flux-programming-lang"
+$REPO        = "ranaji114/Ezra-programming-lang"
 $ASSET_NAME  = "ezra-windows-x86_64-$VERSION.zip"
 $DEFAULT_DIR = Join-Path $env:LOCALAPPDATA "Ezra"
 $BIN_DIR     = Join-Path $DEFAULT_DIR "bin"
@@ -308,7 +308,7 @@ $installBtn.Add_Click({
                 $msg += "  Install: VS Code -> Extensions -> ... -> Install from VSIX`r`n`r`n"
             }
         }
-        $msg += "Docs: https://ranaji114.github.io/Flux-programming-lang"
+        $msg += "Docs: https://ranaji114.github.io/Ezra-programming-lang"
 
         [System.Windows.Forms.MessageBox]::Show($msg, "Ezra Installed!",
             [System.Windows.Forms.MessageBoxButtons]::OK,

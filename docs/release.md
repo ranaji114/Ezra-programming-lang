@@ -1,4 +1,4 @@
-# Release and Install Guide
+﻿# Release and Install Guide
 
 This page describes the release artifacts and the local checks for Flux.
 
@@ -38,14 +38,14 @@ powershell -ExecutionPolicy Bypass -File install/install.ps1
 After the terminal is restarted:
 
 ~~~powershell
-flux --version
+ezra --version
 ~~~
 
 ## Install on Linux and macOS
 
 ~~~bash
 sh install/install.sh
-flux --version
+ezra --version
 ~~~
 
 Make sure the install directory is in PATH.
@@ -75,9 +75,9 @@ cargo build --release
 Run representative examples too:
 
 ~~~bash
-flux check examples/calculator.flux
-flux run examples/hello.flux
-flux run examples/collections.flux
+ezra check examples/calculator.ez
+ezra run examples/hello.ez
+ezra run examples/collections.ez
 ~~~
 
 ## Versioning
@@ -88,6 +88,6 @@ preparing a new release.
 
 ## Current Limitation
 
-flux build validates a Flux project and writes build/manifest.txt. It does not
-compile .flux programs into standalone native executables. Native compilation
+ezra build validates a Ezra project and writes build/manifest.txt. It does not
+compile .ez programs into standalone native executables. Native compilation
 and application bundling are future milestones.

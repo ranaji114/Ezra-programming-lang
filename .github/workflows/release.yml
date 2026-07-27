@@ -1,4 +1,4 @@
-name: CI · Build · Release
+﻿name: CI · Build · Release
 # Author: Ankur Rana
 
 on:
@@ -253,7 +253,7 @@ jobs:
           Architecture: $ARCH
           Installed-Size: $INSTALLED
           Maintainer: Ankur Rana <ankur@ranaji114.github.io>
-          Homepage: https://ranaji114.github.io/Flux-programming-lang
+          Homepage: https://ranaji114.github.io/Ezra-programming-lang
           Description: Ezra scripting language interpreter
            Readable, indentation-based scripting language built in Rust.
            Created by Ankur Rana.
@@ -513,7 +513,7 @@ jobs:
           ezra run
           ```
 
-          Docs: https://ranaji114.github.io/Flux-programming-lang
+          Docs: https://ranaji114.github.io/Ezra-programming-lang
           EOF
 
       - uses: softprops/action-gh-release@v2

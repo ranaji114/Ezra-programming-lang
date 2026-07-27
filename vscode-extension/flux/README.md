@@ -1,4 +1,4 @@
-# Ezra Language — VS Code Extension
+﻿# Ezra Language — VS Code Extension
 
 **Author:** Ankur Rana  
 **Version:** 1.0.0  
@@ -88,7 +88,7 @@ Search for **Ezra Language** in the VS Code Extensions view (`Ctrl+Shift+X`).
 
 ### From VSIX
 
-1. Download `ezra-lang-1.0.0.vsix` from the [GitHub releases page](https://github.com/ranaji114/Flux-programming-lang/releases).
+1. Download `ezra-lang-1.0.0.vsix` from the [GitHub releases page](https://github.com/ranaji114/Ezra-programming-lang/releases).
 2. Open VS Code → Extensions (`Ctrl+Shift+X`).
 3. Click **···** → **Install from VSIX…**
 4. Select the downloaded file and reload.
@@ -156,7 +156,7 @@ Set `ezra.lsp.serverPath` explicitly if needed.
 
 Created by **Ankur Rana**  
 GitHub: [github.com/ranaji114](https://github.com/ranaji114)  
-Language repo: [Flux-programming-lang](https://github.com/ranaji114/Flux-programming-lang)
+Language repo: [Flux-programming-lang](https://github.com/ranaji114/Ezra-programming-lang)
 
 ---
 

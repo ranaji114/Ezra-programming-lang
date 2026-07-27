@@ -1,11 +1,11 @@
-# Ezra Language — Production Readiness Audit Report
+﻿# Ezra Language — Production Readiness Audit Report
 
 **Author:** Ankur Rana  
 **Version:** 0.1.0  
 **Audit Date:** 2026-07-25  
 **Auditor:** Senior Language Engineer / DevOps Specialist  
 **Binary:** `ezra` (source files: `.ez`)  
-**Repository:** https://github.com/ranaji114/Flux-programming-lang  
+**Repository:** https://github.com/ranaji114/Ezra-programming-lang  
 **Test Suite:** 55 total — **all passing**
 
 ---

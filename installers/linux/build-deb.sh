@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Build a .deb package for Ezra
 # Author: Ankur Rana
 # Usage: ./build-deb.sh [version] [arch]
@@ -126,7 +126,7 @@ Priority: optional
 Architecture: $ARCH
 Installed-Size: $INSTALLED_SIZE
 Maintainer: Ankur Rana <ankur@ranaji114.github.io>
-Homepage: https://ranaji114.github.io/Flux-programming-lang
+Homepage: https://ranaji114.github.io/Ezra-programming-lang
 Description: Ezra scripting language interpreter
  Ezra is a readable, indentation-based scripting language built in Rust.
  Created by Ankur Rana.

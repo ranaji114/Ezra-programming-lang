@@ -1,81 +1,79 @@
-# Flux Tutorial
+﻿# Ezra Tutorial
 
-This tutorial introduces Flux from the first line of code to a small command
-line calculator.
+This tutorial introduces Ezra step by step, from your first `say` statement to a working calculator.
 
-## 1. Install Flux
+## 1. Install Ezra
 
-Install a release binary, then confirm that the command is available:
-
-```bash
-flux --version
-```
-
-You can also run Flux from the repository with Cargo:
+Follow the [Getting Started guide](getting-started.md) to install Ezra, then verify:
 
 ```bash
-cargo run -- --version
+ezra --version
 ```
 
-## 2. Hello, Flux
+Expected: `ezra 1.0.0`
 
-Create a file named `hello.flux`:
+You can also use Cargo during development:
 
-```flux
-say "Hello, Flux!"
+```bash
+cargo run --bin ezra -- --version
+```
+
+## 2. Hello, Ezra
+
+Create `hello.ez`:
+
+```ezra
+say "Hello, Ezra!"
 ```
 
 Run it:
 
 ```bash
-flux run hello.flux
+ezra run hello.ez
 ```
 
-`say` evaluates its expression and prints the result followed by a newline.
-Flux text values use double quotes.
+`say` prints the value followed by a newline. Text values use double quotes.
 
 ## 3. Variables
 
-Flux uses `is` for assignment:
+Ezra uses `is` for assignment:
 
-```flux
+```ezra
 name is "Ankur"
-age is 20
-score is 7 + 3 * 2
+age  is 20
+score is 7 + 3 * 2   # 13 — * before +
 
 say name
 say age
 say score
 ```
 
-There is no separate `let` or `const` declaration in the current language.
-Assigning to a name that already exists updates it; assigning a new name
-creates it.
+`is` creates or updates a variable. Assigning a new name creates it; reassigning updates it.
+
+> Python: `name = "Ankur"` · JavaScript: `let name = "Ankur"`
 
 ## 4. Text Interpolation
 
-Put an expression inside braces in a text literal:
+Put expressions inside `{ }` in a text literal:
 
-```flux
-name is "Flux"
-version is 1
-say "Welcome to {name} {version}!"
+```ezra
+name is "Ezra"
+version is "1.0.0"
+say "Welcome to {name} v{version}!"
+say "2 + 2 = {2 + 2}"
+say "Upper: {name.upper()}"
 ```
 
-Interpolation can contain function calls, indexing, and property access:
-
-```flux
-user is { name: "Rana", age: 25 }
-say "{user.name} is {user.age} years old"
-say "{user.name.upper()}"
+Output:
+```
+Welcome to Ezra v1.0.0!
+2 + 2 = 4
+Upper: EZRA
 ```
 
 ## 5. Conditions
 
-Use `check if`, followed by an indented body. `otherwise if` and `otherwise`
-are optional:
-
-```flux
+```ezra
 age is 20
 
 check if age >= 18
@@ -86,115 +84,149 @@ otherwise
   say "Child"
 ```
 
-Flux uses indentation to define blocks. Keep indentation consistent and use
-spaces instead of tabs.
+> Python: `if age >= 18:` · JavaScript: `if (age >= 18) {`
+
+Indentation defines blocks. Use spaces, not tabs. Two spaces per level is recommended.
 
 ## 6. Loops
 
-Repeat a block a fixed number of times:
+**Repeat N times:**
 
-```flux
-count is 0
+```ezra
 repeat 3 times
-  count += 1
-  say count
+  say "tick"
 ```
 
-Iterate over a list with `for each`:
+**Iterate a list:**
 
-```flux
-names is ["Rana", "Aman", "Priya"]
-
+```ezra
+names is ["Alice", "Bob", "Carol"]
 for each name in names
   say "Hello {name}"
 ```
 
-Use `break` to leave the loop and `next` to skip to the next iteration.
+**While loop:**
+
+```ezra
+i is 0
+while i < 5
+  i += 1
+  say i
+```
+
+Use `break` to exit a loop early, `next` to skip to the next iteration.
 
 ## 7. Functions
 
-Define a named function with `give`:
-
-```flux
+```ezra
 give add(a, b)
-  -> a + b
+  -> a + b        # arrow shorthand for return
 
-result is add(2, 3)
-say result
+give greet(name)
+  say "Hello {name.upper()}!"
+  return "done"
+
+say add(3, 4)     # 7
+greet("rana")     # Hello RANA!
 ```
 
-`-> expression` is shorthand for `return expression`. A function that reaches
-the end without returning a value produces `nothing`.
-
-Functions can read values from outer scopes, but parameters and variables
-created inside a function are local to its call.
+`-> expression` is shorthand for `return expression`. Functions that reach the end without a return produce `nothing`.
 
 ## 8. Lists and Objects
 
-Lists use square brackets. Objects use braces with `key: value` fields:
-
-```flux
+```ezra
+# Lists
 numbers is [10, 20, 30]
-person is { name: "Rana", age: 25 }
+say numbers[0]         # 10
+say numbers.length     # 3
 
-say numbers[0]
-say person.name
-say person["age"]
+numbers is numbers.push(40)
+say numbers            # [10, 20, 30, 40]
+
+# Objects
+user is { name: "Rana", age: 25 }
+say user.name          # Rana
+say user["age"]        # 25
 ```
 
-Missing list indexes, text indexes, and object keys return `nothing`.
+Note: list methods return a **new list** — they do not modify in place.
+
+```ezra
+# Higher-order functions
+nums is [1, 2, 3, 4, 5]
+say nums.filter(n -> n % 2 is 0)   # [2, 4]
+say nums.map(n -> n * 2)           # [2, 4, 6, 8, 10]
+say nums.reduce((a, n) -> a + n, 0) # 15
+```
 
 ## 9. Input and Output
 
-Use `input` for text and `input_number` for numeric input:
-
-```flux
+```ezra
 name is input "Name: "
-age is input_number "Age: "
-say "Hello {name}; next year you will be {age + 1}."
+age  is input_number "Age: "
+say "Hello {name}, next year you will be {age + 1}."
 ```
 
-Other output statements are available:
+Other output statements:
 
-```flux
-say "newline"
+```ezra
+say "newline after"
 write "no newline"
-warn "warning on stderr"
-fail "error-style message on stderr"
-debug "diagnostic message on stderr"
+warn "warning to stderr"
+fail "error-style message to stderr"
+debug "diagnostic info to stderr"
 ```
 
-## 10. A Complete Calculator
+## 10. Error Handling
 
-```flux
-say "Flux Calculator"
-first is input_number "First number: "
-operation is input "Operation (+, -, *, /): "
-second is input_number "Second number: "
+```ezra
+try
+  result is 10 / 0
+  say "This never prints"
+catch err
+  say "Caught: {err}"
+finally
+  say "Always runs"
 
-check if operation is "+"
-  say "Result: {first + second}"
-otherwise if operation is "-"
-  say "Result: {first - second}"
-otherwise if operation is "*"
-  say "Result: {first * second}"
-otherwise if operation is "/"
-  check if second is 0
-    say "Cannot divide by zero."
+# Manual throw
+try
+  throw "something went wrong"
+catch msg
+  say "Got: {msg}"
+```
+
+## 11. A Complete Calculator
+
+```ezra
+say "Ezra Calculator"
+a  is input_number "First number: "
+op is input "Operation (+ - * /): "
+b  is input_number "Second number: "
+
+check if op is "+"
+  say "{a} + {b} = {a + b}"
+otherwise if op is "-"
+  say "{a} - {b} = {a - b}"
+otherwise if op is "*"
+  say "{a} * {b} = {a * b}"
+otherwise if op is "/"
+  check if b is 0
+    say "Cannot divide by zero"
   otherwise
-    say "Result: {first / second}"
+    say "{a} / {b} = {a / b}"
 otherwise
-  say "Unknown operation."
+  say "Unknown operation: {op}"
 ```
 
-Run it with:
+Run it:
 
 ```bash
-flux run calculator.flux
+ezra run calculator.ez
 ```
 
 ## Next Steps
 
-- Read the [Language Reference](language-reference.md) for exact syntax.
-- Read the [CLI Reference](cli-reference.md) for project and developer commands.
-- Read [Tooling and VS Code](tooling.md) to configure the editor.
+- Read the [Language Reference](language-reference.md) for complete syntax
+- Browse the [Standard Library](stdlib/index.md) for all built-in functions
+- Look at the [CLI Reference](cli-reference.md) for tooling commands
+- Check [Examples](examples/index.md) for more code patterns

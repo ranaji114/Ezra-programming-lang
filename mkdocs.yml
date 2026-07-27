@@ -1,9 +1,9 @@
-site_name: Ezra Language
+﻿site_name: Ezra Language
 site_description: Ezra — a readable scripting language built in Rust. Created by Ankur Rana.
 site_author: Ankur Rana
-site_url: https://ranaji114.github.io/Flux-programming-lang
-repo_url: https://github.com/ranaji114/Flux-programming-lang
-repo_name: ranaji114/Flux-programming-lang
+site_url: https://ranaji114.github.io/Ezra-programming-lang
+repo_url: https://github.com/ranaji114/Ezra-programming-lang
+repo_name: ranaji114/Ezra-programming-lang
 copyright: "© 2026 Ankur Rana — MIT License"
 
 theme:
@@ -36,7 +36,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/ranaji114/Flux-programming-lang
+      link: https://github.com/ranaji114/Ezra-programming-lang
   generator: false
 
 extra_css:

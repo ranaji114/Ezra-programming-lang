@@ -1,109 +1,109 @@
-# Flux CLI Reference
+﻿# Ezra CLI Reference
 
-The flux command runs Flux programs and provides the project tools included in
+The ezra command runs Ezra programs and provides the project tools included in
 the alpha release.
 
 ## Command Summary
 
 | Command | Purpose |
 | --- | --- |
-| flux new <project-name> | Create a new project |
-| flux run [file.flux] | Run a source file |
-| flux check [file.flux] | Parse a file without running it |
-| flux test [path] | Run Flux test files |
-| flux fmt [path] [--check] | Format Flux files |
-| flux lint [path] | Report style and parser diagnostics |
-| flux build [project-dir] | Validate a project and write a manifest |
-| flux repl | Open the interactive shell |
-| flux --version | Print the installed version |
-| flux --help | Print command help |
+| ezra new <project-name> | Create a new project |
+| ezra run [file.ez] | Run a source file |
+| ezra check [file.ez] | Parse a file without running it |
+| ezra test [path] | Run ezra test files |
+| ezra fmt [path] [--check] | Format Ezra files |
+| ezra lint [path] | Report style and parser diagnostics |
+| ezra build [project-dir] | Validate a project and write a manifest |
+| ezra repl | Open the interactive shell |
+| ezra --version | Print the installed version |
+| ezra --help | Print command help |
 
 When a file or path is omitted, commands use the current directory or the
 default project entry point where applicable.
 
-## flux new
+## ezra new
 
 Creates a project directory with a source folder, test folder, manifest, and
 starter files:
 
 ~~~text
-flux new hello_flux
+ezra new hello_flux
 cd hello_flux
-flux run
+ezra run
 ~~~
 
 Generated layout:
 
 ~~~text
 hello_flux/
-  flux.toml
+  ezra.toml
   src/
-    main.flux
+    main.ez
   tests/
-    main_test.flux
+    main_test.ez
 ~~~
 
 Project names may contain ASCII letters, numbers, hyphen, and underscore. The
 command fails if the target already exists.
 
-The generated flux.toml currently contains package metadata for future tooling.
+The generated ezra.toml currently contains package metadata for future tooling.
 The interpreter does not yet resolve dependencies from it.
 
-## flux run
+## ezra run
 
-Runs a Flux file:
+Runs an Ezra file:
 
 ~~~bash
-flux run examples/hello.flux
+ezra run examples/hello.ez
 ~~~
 
-With no path, the CLI reads src/main.flux in the current directory:
+With no path, the CLI reads src/main.ez in the current directory:
 
 ~~~bash
 cd hello_flux
-flux run
+ezra run
 ~~~
 
 Program output goes to standard output. warn, fail, and debug diagnostics go to
 standard error. A syntax or runtime failure exits with a non-zero status.
 
-## flux check
+## ezra check
 
 Parses a file without executing it:
 
 ~~~bash
-flux check src/main.flux
+ezra check src/main.ez
 ~~~
 
 A successful check prints a confirmation. This is useful before running code
 that asks for input or performs side effects.
 
-With no path, it checks src/main.flux.
+With no path, it checks src/main.ez.
 
-## flux test
+## ezra test
 
-Runs .flux files as test programs:
+Runs .ez files as test programs:
 
 ~~~bash
-flux test
-flux test tests/main_test.flux
+ezra test
+ezra test tests/main_test.ez
 ~~~
 
 When the path is a directory, only files whose filename stem ends in _test are
-selected. For example, math_test.flux is selected but example.flux is not.
+selected. For example, math_test.ez is selected but example.ez is not.
 When the path is a single file, that file is run regardless of its name.
 
 Each test file is parsed and executed. A test is considered successful when it
 finishes without an error. The current language has no built-in assertion
 statement, so tests commonly use program behavior and runtime failures.
 
-## flux fmt
+## ezra fmt
 
-Formats one file or every .flux file under a directory:
+Formats one file or every .ez file under a directory:
 
 ~~~bash
-flux fmt src/main.flux
-flux fmt .
+ezra fmt src/main.ez
+ezra fmt .
 ~~~
 
 The formatter currently:
@@ -117,18 +117,18 @@ The formatter currently:
 Use --check in CI or before a commit:
 
 ~~~bash
-flux fmt . --check
+ezra fmt . --check
 ~~~
 
 --check does not write files. It exits non-zero when a file needs formatting.
 
-## flux lint
+## ezra lint
 
 Checks a file or directory:
 
 ~~~bash
-flux lint src/main.flux
-flux lint .
+ezra lint src/main.ez
+ezra lint .
 ~~~
 
 The linter reports:
@@ -141,18 +141,18 @@ The linter reports:
 Warnings do not fail the command. Parser errors do. Diagnostics include the
 path, line, column, severity, and message.
 
-## flux build
+## ezra build
 
 Validates a project entry point and writes a build manifest:
 
 ~~~bash
-flux build .
+ezra build .
 ~~~
 
 The command expects:
 
 ~~~text
-./src/main.flux
+./src/main.ez
 ~~~
 
 On success it creates:
@@ -161,52 +161,52 @@ On success it creates:
 ./build/manifest.txt
 ~~~
 
-The manifest records the project path, entry file, and Flux version. This is a
+The manifest records the project path, entry file, and Ezra version. This is a
 project validation step, not native compilation. It does not produce a
 standalone executable.
 
-## flux repl
+## ezra repl
 
 Starts a small interactive read-eval-print loop:
 
 ~~~bash
-flux repl
+ezra repl
 ~~~
 
-Enter a single-line Flux statement or expression. Type exit or quit to leave:
+Enter a single-line Ezra statement or expression. Type exit or quit to leave:
 
 ~~~text
-Flux REPL 0.1.0
+ezra repl 0.1.0
 Type exit or press Ctrl+C to quit.
-flux> say "Hello"
+ezra> say "Hello"
 Hello
-flux> exit
+ezra> exit
 ~~~
 
 The REPL keeps its environment between input lines. Multi-line blocks are
-better written to a .flux file and run with flux run.
+better written to a .ez file and run with ezra run.
 
-## flux --version and flux --help
+## ezra --version and ezra --help
 
 Print the installed version:
 
 ~~~bash
-flux --version
+ezra --version
 ~~~
 
 Print usage information and the available command list:
 
 ~~~bash
-flux --help
+ezra --help
 ~~~
 
 ## Running from Source
 
-When developing Flux itself, use Cargo:
+When developing Ezra itself, use Cargo:
 
 ~~~bash
-cargo run -- run examples/hello.flux
-cargo run -- check examples/hello.flux
+cargo run -- run examples/hello.ez
+cargo run -- check examples/hello.ez
 cargo run -- test
 cargo run -- fmt . --check
 cargo run -- lint .
@@ -214,7 +214,7 @@ cargo run -- build .
 cargo run -- repl
 ~~~
 
-The double hyphen separates Cargo arguments from Flux arguments.
+The double hyphen separates Cargo arguments from Ezra arguments.
 
 ## Exit Status
 
@@ -227,22 +227,22 @@ status for:
 - runtime errors
 - failed format checks
 - lint results containing parser errors
-- a project without src/main.flux
+- a project without src/main.ez
 
 ## Input and Output Streams
 
-Flux follows normal command-line stream conventions:
+Ezra follows normal command-line stream conventions:
 
 - say, write, and normal program output use standard output
 - warn, fail, and debug use standard error
 - prompts from input and input_number use standard output
-- flux run does not capture or transform child program streams
+- ezra run does not capture or transform child program streams
 
 This makes it possible to redirect output:
 
 ~~~bash
-flux run main.flux > output.txt
-flux run main.flux 2> diagnostics.txt
+ezra run main.ez > output.txt
+ezra run main.ez 2> diagnostics.txt
 ~~~
 
 ## Common Workflows
@@ -250,26 +250,26 @@ flux run main.flux 2> diagnostics.txt
 ### New Project
 
 ~~~bash
-flux new my_app
+ezra new my_app
 cd my_app
-flux check
-flux run
+ezra check
+ezra run
 ~~~
 
 ### Before Commit
 
 ~~~bash
-flux fmt . --check
-flux lint .
-flux test
+ezra fmt . --check
+ezra lint .
+ezra test
 ~~~
 
 ### Try an Example
 
 ~~~bash
-flux run examples/basics.flux
-flux run examples/collections.flux
-flux run examples/functions.flux
-flux run examples/input.flux
+ezra run examples/basics.ez
+ezra run examples/collections.ez
+ezra run examples/functions.ez
+ezra run examples/input.ez
 ~~~
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Build a macOS .pkg installer for Ezra
 # Author: Ankur Rana
 # Usage: ./build-pkg.sh [version] [arch]
@@ -69,7 +69,7 @@ if command -v man-db >/dev/null 2>&1;  then man-db -q; fi
 echo ""
 echo "✓ Ezra 1.0.0 installed to /usr/local/bin/ezra"
 echo "  Created by Ankur Rana"
-echo "  Docs: https://ranaji114.github.io/Flux-programming-lang"
+echo "  Docs: https://ranaji114.github.io/Ezra-programming-lang"
 echo ""
 echo "Quick start:"
 echo "  ezra --version"
@@ -143,7 +143,7 @@ cat > "$ROOT/installers/macos/conclusion.html" << 'HTML'
 ezra new hello_app
 cd hello_app
 ezra run</pre>
-  <p>Docs: <a href="https://ranaji114.github.io/Flux-programming-lang">ranaji114.github.io/Flux-programming-lang</a></p>
+  <p>Docs: <a href="https://ranaji114.github.io/Ezra-programming-lang">ranaji114.github.io/Flux-programming-lang</a></p>
 </body>
 </html>
 HTML

@@ -1,9 +1,9 @@
-# Ezra v1.0.0 — Release Summary
+﻿# Ezra v1.0.0 — Release Summary
 
 **Author:** Ankur Rana  
 **Date:** 2026-07-25  
-**Repository:** https://github.com/ranaji114/Flux-programming-lang  
-**Docs:** https://ranaji114.github.io/Flux-programming-lang
+**Repository:** https://github.com/ranaji114/Ezra-programming-lang  
+**Docs:** https://ranaji114.github.io/Ezra-programming-lang
 
 ---
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Build an .rpm package for Ezra (Fedora/RHEL/openSUSE)
 # Author: Ankur Rana
 # Usage: ./build-rpm.sh [version]
@@ -40,7 +40,7 @@ Version:        $VERSION
 Release:        ${RELEASE}%{?dist}
 Summary:        Ezra scripting language interpreter
 License:        MIT
-URL:            https://ranaji114.github.io/Flux-programming-lang
+URL:            https://ranaji114.github.io/Ezra-programming-lang
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      $ARCH
 

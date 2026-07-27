@@ -1,4 +1,4 @@
-# Ezra — Vim / Neovim Support
+﻿# Ezra — Vim / Neovim Support
 
 **Author:** Ankur Rana
 
@@ -24,13 +24,13 @@ cp indent/ezra.vim   ~/.config/nvim/indent/
 ### vim-plug
 
 ```vim
-Plug 'ranaji114/Flux-programming-lang', { 'rtp': 'editor-support/vim' }
+Plug 'ranaji114/Ezra-programming-lang', { 'rtp': 'editor-support/vim' }
 ```
 
 ### Lazy.nvim (Neovim)
 
 ```lua
-{ "ranaji114/Flux-programming-lang", config = false,
+{ "ranaji114/Ezra-programming-lang", config = false,
   init = function()
     vim.opt.rtp:append(vim.fn.stdpath("data") .. "/lazy/Flux-programming-lang/editor-support/vim")
   end

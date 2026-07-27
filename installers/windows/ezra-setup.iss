@@ -1,4 +1,4 @@
-; Ezra Language — Inno Setup 6 installer script
+﻿; Ezra Language — Inno Setup 6 installer script
 ; Author: Ankur Rana
 ; Build: iscc installers\windows\ezra-setup.iss
 ; Download Inno Setup: https://jrsoftware.org/isdl.php
@@ -6,7 +6,7 @@
 #define AppName      "Ezra"
 #define AppVersion   "1.0.0"
 #define AppPublisher "Ankur Rana"
-#define AppURL       "https://ranaji114.github.io/Flux-programming-lang"
+#define AppURL       "https://ranaji114.github.io/Ezra-programming-lang"
 #define AppExe       "ezra.exe"
 #define AppLspExe    "ezra-lsp.exe"
 #define AppGUID      "{{B7C4A1D2-3E5F-4890-BCDE-F01234567890}"

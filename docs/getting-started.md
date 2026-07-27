@@ -1,64 +1,132 @@
-# Getting Started with Flux
+﻿# Getting Started with Ezra
 
-This page is a short entry point for the current Flux alpha release.
+This page gets you running with Ezra in under 5 minutes.
 
-For the complete guide, start with:
+---
 
-- [Flux Documentation](README.md)
-- [Flux Tutorial](tutorial.md)
-- [Language Reference](language-reference.md)
-- [CLI Reference](cli-reference.md)
-- [Tooling and VS Code](tooling.md)
+## Install
 
-## Run an Existing File
+### Windows
 
-~~~bash
-flux check examples/hello.flux
-flux run examples/hello.flux
-~~~
+**Option 1 — GUI installer (recommended)**
+
+Download [EzraSetup-1.0.0.exe](https://github.com/ranaji114/Ezra-programming-lang/releases/latest/download/EzraSetup-1.0.0.exe) and double-click it.
+
+> Windows may show "Windows protected your PC" — click **More info → Run anyway**.
+
+**Option 2 — Command line**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File install\install.ps1
+```
+
+### Linux / macOS
+
+```bash
+sh install/install.sh
+```
+
+### From source
+
+```bash
+git clone https://github.com/ranaji114/Ezra-programming-lang
+cd Flux-programming-lang
+cargo build --release
+```
+
+### Verify
+
+```
+ezra --version
+```
+
+Expected: `ezra 1.0.0`
+
+---
+
+## Your First Program
+
+Create a file called `hello.ez`:
+
+```ezra
+say "Hello, World!"
+```
+
+Run it:
+
+```bash
+ezra run hello.ez
+```
+
+Output: `Hello, World!`
+
+---
 
 ## Create a Project
 
-~~~bash
-flux new hello_flux
-cd hello_flux
-flux check
-flux run
-flux test
-~~~
+```bash
+ezra new hello_app
+cd hello_app
+ezra run
+```
+
+This creates:
+
+```
+hello_app/
+  ezra.toml         project config
+  src/
+    main.ez         entry point
+  tests/
+    main_test.ez    test file
+```
+
+---
 
 ## Core Commands
 
-~~~bash
-flux run [file.flux]
-flux check [file.flux]
-flux test [tests-dir-or-file]
-flux fmt [path] [--check]
-flux lint [path]
-flux build [project-dir]
-flux repl
-flux --version
-~~~
+```bash
+ezra run [file.ez]          # Run a program
+ezra check [file.ez]        # Parse without running
+ezra test [tests-dir]       # Run test files
+ezra fmt [path] [--check]   # Format .ez files
+ezra lint [path]            # Lint source files
+ezra build [project-dir]    # Validate project
+ezra repl                   # Interactive shell
+ezra --version              # Print version
+```
 
-## Small Example
+---
 
-~~~flux
+## A Small Example
+
+```ezra
 name is input "Name: "
 say "Hello {name}!"
-~~~
+```
 
-Save the program as main.flux and run:
+Save as `main.ez` and run:
 
-~~~bash
-flux run main.flux
-~~~
+```bash
+ezra run main.ez
+```
+
+---
 
 ## Current Status
 
-The current build supports variables, values, expressions, conditions, loops,
-functions, input/output, collections, interpolation, formatting, linting,
-testing, and the REPL.
+Ezra v1.0.0 supports:
 
-It is an alpha release. Modules, package management, native compilation, async
-actors, and advanced standard-library features are not implemented yet.
+- Variables, types, expressions
+- Conditions, loops, functions
+- Text interpolation
+- Lists, objects, higher-order functions
+- Error handling (`try`/`catch`/`throw`)
+- Pattern matching (`pick`/`when`)
+- Modules (`use`/`from`)
+- File I/O, JSON, math, OS builtins
+- REPL, formatter, linter, test runner
+- VS Code extension with LSP
 
+See the [Language Reference](language-reference.md) for the complete syntax.
+See the [Standard Library](stdlib/index.md) for all built-in functions.
