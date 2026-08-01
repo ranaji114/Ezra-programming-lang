@@ -63,8 +63,8 @@ export default function AboutPage() {
         <div className="container" style={{ maxWidth: 760 }}>
           <h2 style={{ marginBottom: '1.25rem' }}>Why Ezra was created</h2>
           <p>Most scripting languages force you to think about the language before you think about your problem. Ezra tries to fix that.</p>
-          <p>The syntax is designed to read like plain English. <code>check if age &gt;= 18</code> instead of <code>if (age &gt;= 18) {'{'} {'}'}</code>. <code>for each item in list</code> instead of <code>for item in list:</code>. Small differences, big readability improvement.</p>
-          <p>Built on Rust, Ezra gets memory safety and fast startup for free. The entire toolchain — formatter, linter, test runner, REPL — ships in a single binary so there is nothing to install separately.</p>
+          <p>The syntax is designed to read like plain English. <code>check if age &gt;= 18</code> instead of <code>if (age &gt;= 18)</code>. <code>for each item in list</code> instead of <code>for item in list:</code>. Small differences, big readability improvement.</p>
+          <p>Built on Rust, Ezra gets memory safety and fast startup for free. The entire toolchain, formatter, linter, test runner, REPL, ships in a single binary so there is nothing to install separately.</p>
 
           <h2 style={{ marginTop: '2.5rem', marginBottom: '1.25rem' }}>Design principles</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
