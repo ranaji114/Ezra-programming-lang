@@ -88,22 +88,18 @@ export default function DownloadPage() {
               <h3>Linux</h3>
               <p className="sub">Most modern distributions</p>
 
-              <DlBtn
-                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-linux-x86_64-1.0.0.tar.gz"
-                label="ezra-linux-x86_64-1.0.0.tar.gz"
-                size="x86_64 · tar.gz"
-              />
-              <DlBtn
-                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-linux-aarch64-1.0.0.tar.gz"
-                label="ezra-linux-aarch64-1.0.0.tar.gz"
-                size="ARM64 (Raspberry Pi, Graviton)"
-              />
+              <div style={{ padding: '1rem', background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', marginBottom: '0.75rem', fontSize: '0.85rem', color: 'var(--text-2)' }}>
+                Linux binaries will be available in the next release. For now, install from source:
+              </div>
 
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', margin: '0.75rem 0 0.4rem' }}>One-line install:</p>
-              <CmdRow cmd="sh install/install.sh" />
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: '0.4rem' }}>Build from source (Rust required):</p>
+              <CmdRow cmd="git clone https://github.com/ranaji114/Ezra-programming-lang" />
+              <CmdRow cmd="cd Ezra-programming-lang" />
+              <CmdRow cmd="cargo build --release" />
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: '0.4rem' }}>Binary: <code>target/release/ezra</code></p>
 
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', margin: '0.5rem 0 0.4rem' }}>Or directly from web:</p>
-              <CmdRow cmd="curl -sSf https://raw.githubusercontent.com/ranaji114/Ezra-programming-lang/main/install/install.sh | sh" />
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', margin: '0.75rem 0 0.4rem' }}>Or check GitHub for latest releases:</p>
+              <CmdRow cmd="https://github.com/ranaji114/Ezra-programming-lang/releases" />
             </div>
 
             {/* MACOS */}
@@ -112,19 +108,20 @@ export default function DownloadPage() {
               <h3>macOS</h3>
               <p className="sub">macOS 10.15+ · Intel &amp; Apple Silicon</p>
 
-              <DlBtn
-                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-macos-aarch64-1.0.0.tar.gz"
-                label="ezra-macos-aarch64-1.0.0.tar.gz"
-                size="Apple Silicon (M1/M2/M3)"
-              />
-              <DlBtn
-                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-macos-x86_64-1.0.0.tar.gz"
-                label="ezra-macos-x86_64-1.0.0.tar.gz"
-                size="Intel Mac"
-              />
+              <div style={{ padding: '1rem', background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', marginBottom: '0.75rem', fontSize: '0.85rem', color: 'var(--text-2)' }}>
+                macOS binaries will be available in the next release. For now, install from source:
+              </div>
 
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', margin: '0.75rem 0 0.4rem' }}>One-line install:</p>
-              <CmdRow cmd="sh install/install.sh" />
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: '0.4rem' }}>Build from source (Rust required):</p>
+              <CmdRow cmd="git clone https://github.com/ranaji114/Ezra-programming-lang" />
+              <CmdRow cmd="cd Ezra-programming-lang" />
+              <CmdRow cmd="cargo build --release" />
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: '0.4rem' }}>Binary: <code>target/release/ezra</code></p>
+
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', margin: '0.75rem 0 0.4rem' }}>Or check GitHub for latest releases:</p>
+              <a href="https://github.com/ranaji114/Ezra-programming-lang/releases" target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm" style={{ display: 'inline-block', marginTop: '0.25rem' }}>
+                View Releases on GitHub →
+              </a>
             </div>
           </div>
         </div>
