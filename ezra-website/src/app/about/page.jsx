@@ -1,189 +1,143 @@
 ﻿'use client';
 import Link from 'next/link';
 
-const STATS = [
-  { value: 'v1.0.0', label: 'Current Version' },
-  { value: 'Rust', label: 'Built With' },
-  { value: 'MIT', label: 'License' },
-  { value: '55/55', label: 'Tests Passing' },
-];
-
-const TIMELINE = [
-  { date: '2024', title: 'Concept & Design', desc: 'Ezra started as an idea — a scripting language that reads like English, powered by Rust.' },
-  { date: 'Early 2025', title: 'First Working Build', desc: 'Core parser, interpreter, and basic standard library complete. Variables, functions, and control flow working.' },
-  { date: 'Mid 2025', title: 'Standard Library Expansion', desc: 'Math, collections, string manipulation, I/O, and JSON support added. Test suite reaches 55 tests.' },
-  { date: 'Late 2025', title: 'IDE Tools', desc: 'VS Code extension published. Vim support added. REPL polished. Formatter and linter included.' },
-  { date: 'July 2026', title: 'v1.0.0 Released', desc: 'Public release. Cross-platform binaries for Windows, Linux, macOS. Full documentation.' },
-];
-
-const COMPARE = [
-  { feature: 'Readable syntax', ezra: '✅', python: '✅', js: '⚠' },
-  { feature: 'No braces / semicolons', ezra: '✅', python: '✅', js: '❌' },
-  { feature: 'Rust-powered runtime', ezra: '✅', python: '❌', js: '❌' },
-  { feature: 'Cross-platform', ezra: '✅', python: '✅', js: '✅' },
-  { feature: 'Built-in formatter', ezra: '✅', python: '⚠', js: '❌' },
-  { feature: 'VS Code extension', ezra: '✅', python: '✅', js: '✅' },
-  { feature: 'Easy to embed', ezra: '✅', python: '⚠', js: '⚠' },
-  { feature: 'MIT licensed', ezra: '✅', python: '✅', js: '✅' },
-];
-
 export default function AboutPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="page-hero">
-        <div className="container">
-          <p className="page-hero-tag">About</p>
-          <h1>About Ezra</h1>
-          <p>The story behind the language, the creator, and the design decisions that shaped it.</p>
+      <div style={{ background: 'var(--bg-alt)', borderBottom: '1px solid var(--border)', padding: '4rem 1.5rem 3rem', marginTop: '64px' }}>
+        <div className="container" style={{ maxWidth: 760 }}>
+          <span className="badge badge-brand" style={{ marginBottom: '1rem', display: 'inline-block' }}>About</span>
+          <h1 style={{ marginBottom: '1rem' }}>About Ezra</h1>
+          <p style={{ fontSize: '1.1rem', color: 'var(--text-2)' }}>
+            Ezra is a readable, indentation-based scripting language built in Rust.
+            It was created with one goal: make programming approachable without sacrificing power.
+          </p>
         </div>
-      </section>
+      </div>
 
-      {/* Author */}
+      {/* AUTHOR */}
       <section className="section">
-        <div className="container">
-          <div className="section-heading">
-            <span className="section-tag">Creator</span>
-            <h2>Meet the person behind Ezra</h2>
-          </div>
+        <div className="container" style={{ maxWidth: 760 }}>
+          <h2 style={{ marginBottom: '1.5rem' }}>Creator</h2>
           <div className="author-card">
             <div className="author-avatar">AR</div>
-            <div className="author-name">Ankur Rana</div>
-            <div className="author-role">Creator &amp; Lead Developer</div>
-            <p className="author-bio">
-              Ankur Rana is the sole creator of Ezra, building the entire language, runtime,
-              tooling, and documentation from scratch. Every line of the parser, interpreter,
-              standard library, and VS Code extension was written by one person with a vision
-              for what a readable scripting language could be.
-            </p>
-            <a
-              href="https://github.com/ranaji114"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-              </svg>
-              @ranaji114 on GitHub
-            </a>
+            <div>
+              <div className="author-name">Ankur Rana</div>
+              <div className="author-role">Creator &amp; Lead Developer</div>
+              <p className="author-bio">
+                Ankur Rana designed and built Ezra entirely from scratch — the lexer, parser,
+                bytecode compiler, FastVM, LSP server, VS Code extension, installer, CI pipeline,
+                and all documentation. Ezra is a solo project built out of a genuine love for
+                language design and developer tooling.
+              </p>
+              <a href="https://github.com/ranaji114" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
+                github.com/ranaji114 →
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Story */}
-      <section className="section section-alt">
-        <div className="container" style={{ maxWidth: '780px', margin: '0 auto' }}>
-          <div className="section-heading" style={{ textAlign: 'left' }}>
-            <span className="section-tag">Origin</span>
-            <h2>Why Ezra was created</h2>
-          </div>
-          <p style={{ fontSize: '1.0625rem', lineHeight: '1.8', color: 'var(--text-body)', marginBottom: '1.25rem' }}>
-            Ezra was born out of a simple frustration: existing scripting languages either have
-            too much syntax noise or too little performance. Python is readable but slow to start
-            and deploy. JavaScript is everywhere but the syntax can be confusing for beginners
-            and the tooling fragmented.
-          </p>
-          <p style={{ fontSize: '1.0625rem', lineHeight: '1.8', color: 'var(--text-body)', marginBottom: '1.25rem' }}>
-            Ezra sets out to answer the question: <em>what if you could write scripts that look like
-            you wrote them in English, but ran on something fast?</em> The Rust runtime means fast
-            startup and low memory. The syntax — with keywords like <code>give</code>, <code>is</code>,
-            <code>say</code>, <code>check if</code> — means code you can read back to someone who has
-            never programmed before and they will mostly understand it.
-          </p>
-          <p style={{ fontSize: '1.0625rem', lineHeight: '1.8', color: 'var(--text-body)' }}>
-            The language is intentionally simple. Ezra does not try to replace large-scale systems
-            languages. It is for scripts, automation, learning, and anywhere you want code to be
-            approachable and fast to write.
-          </p>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="section">
+      {/* STATS */}
+      <section className="section section-alt" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
         <div className="container">
-          <div className="section-heading">
-            <span className="section-tag">By the Numbers</span>
-            <h2>Ezra at a glance</h2>
-          </div>
-          <div className="stats-grid">
-            {STATS.map(s => (
-              <div key={s.label} className="stat-item">
-                <span className="stat-value">{s.value}</span>
-                <span className="stat-label">{s.label}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '1rem', maxWidth: 760, margin: '0 auto' }}>
+            {[
+              ['v1.0.0', 'Current version'],
+              ['Rust', 'Implementation language'],
+              ['55 / 55', 'Tests passing'],
+              ['MIT', 'License'],
+              ['Win · Linux · macOS', 'Supported platforms'],
+            ].map(([val, label]) => (
+              <div key={label} className="card" style={{ textAlign: 'center', padding: '1.25rem' }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--brand)', marginBottom: '0.25rem' }}>{val}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Timeline */}
-      <section className="section section-alt">
-        <div className="container">
-          <div className="section-heading">
-            <span className="section-tag">History</span>
-            <h2>How Ezra got here</h2>
-          </div>
-          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <div className="timeline">
-              {TIMELINE.map(item => (
-                <div key={item.date} className="timeline-item">
-                  <div className="timeline-date">{item.date}</div>
-                  <div className="timeline-title">{item.title}</div>
-                  <div className="timeline-desc">{item.desc}</div>
-                </div>
-              ))}
-            </div>
+      {/* WHY */}
+      <section className="section">
+        <div className="container" style={{ maxWidth: 760 }}>
+          <h2 style={{ marginBottom: '1.25rem' }}>Why Ezra was created</h2>
+          <p>Most scripting languages force you to think about the language before you think about your problem. Ezra tries to fix that.</p>
+          <p>The syntax is designed to read like plain English. <code>check if age &gt;= 18</code> instead of <code>if (age &gt;= 18) {'{'} {'}'}</code>. <code>for each item in list</code> instead of <code>for item in list:</code>. Small differences, big readability improvement.</p>
+          <p>Built on Rust, Ezra gets memory safety and fast startup for free. The entire toolchain — formatter, linter, test runner, REPL — ships in a single binary so there is nothing to install separately.</p>
+
+          <h2 style={{ marginTop: '2.5rem', marginBottom: '1.25rem' }}>Design principles</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
+            {[
+              ['Readability first', 'Code should be scannable without knowing the language.'],
+              ['One binary', 'No dependency managers, no config, no setup. Just ezra.'],
+              ['Honest errors', 'Error messages tell you what went wrong and where.'],
+              ['Safe by default', 'Division by zero, bad indices, wrong types — all caught at runtime with clear messages.'],
+            ].map(([title, desc]) => (
+              <div key={title} className="card" style={{ padding: '1.25rem' }}>
+                <h3 style={{ fontSize: '0.95rem', marginBottom: '0.35rem', color: 'var(--brand)' }}>{title}</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-3)', margin: 0 }}>{desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Comparison */}
-      <section className="section">
-        <div className="container">
-          <div className="section-heading">
-            <span className="section-tag">Comparison</span>
-            <h2>Ezra vs other languages</h2>
-            <p>How Ezra stacks up on key design criteria.</p>
+      {/* TIMELINE */}
+      <section className="section section-alt" style={{ paddingTop: '3.5rem' }}>
+        <div className="container" style={{ maxWidth: 640 }}>
+          <h2 style={{ marginBottom: '2rem' }}>Timeline</h2>
+          <div className="timeline">
+            {[
+              ['2024', 'Concept & Design', 'Started designing Ezra with readability and simplicity as core goals.'],
+              ['Early 2025', 'First Working Interpreter', 'Built the lexer, parser, and tree-walking interpreter in Rust.'],
+              ['Mid 2025', 'Standard Library', 'Added file I/O, JSON, math, collections, and OS builtins.'],
+              ['Late 2025', 'IDE Integration', 'Created VS Code extension with LSP, Vim/Neovim syntax files.'],
+              ['Jan 2026', 'FastVM', 'Rewrote the runtime as a bytecode compiler + register-based VM.'],
+              ['July 2026', 'v1.0.0 Release', 'Public release with cross-platform installers, full docs, 55/55 tests.'],
+            ].map(([date, title, desc]) => (
+              <div key={title} className="tl-item">
+                <div className="tl-dot" />
+                <div className="tl-date">{date}</div>
+                <div className="tl-title">{title}</div>
+                <p className="tl-desc">{desc}</p>
+              </div>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* COMPARISON */}
+      <section className="section">
+        <div className="container" style={{ maxWidth: 760 }}>
+          <h2 style={{ marginBottom: '1.5rem' }}>How Ezra compares</h2>
           <div style={{ overflowX: 'auto' }}>
-            <table className="compare-table">
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid var(--border)', borderRadius: 8 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left' }}>Feature</th>
-                  <th>Ezra</th>
-                  <th>Python</th>
-                  <th>JavaScript</th>
+                  {['Feature', 'Ezra', 'Python', 'JavaScript'].map(h => (
+                    <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', background: 'var(--bg-alt)', borderBottom: '1px solid var(--border)', fontSize: '0.875rem' }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {COMPARE.map(row => (
-                  <tr key={row.feature}>
-                    <td>{row.feature}</td>
-                    <td>{row.ezra}</td>
-                    <td>{row.python}</td>
-                    <td>{row.js}</td>
+                {[
+                  ['Syntax readability',     '✅ English-like',       '✅ Clean',           '⚠ Verbose'],
+                  ['Performance',            '✅ Rust VM',            '⚠ CPython',         '✅ JIT (V8)'],
+                  ['Memory safety',          '✅ Rust guarantees',    '⚠ GC',             '⚠ GC'],
+                  ['Learning curve',         '✅ Designed for all',   '✅ Beginner friendly','⚠ Steeper'],
+                  ['Single binary',          '✅ Yes',                '❌ No',              '❌ No'],
+                  ['Built-in tooling',       '✅ fmt·lint·test·repl', '⚠ Partial',        '⚠ Partial'],
+                  ['Concurrency',            '🔜 Planned',           '⚠ GIL limited',    '✅ async/await'],
+                ].map(row => (
+                  <tr key={row[0]}>
+                    {row.map((cell, i) => (
+                      <td key={i} style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', fontSize: '0.875rem', color: i === 1 ? 'var(--text)' : 'var(--text-2)' }}>{cell}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '1rem' }}>
-            ✅ Yes &nbsp;⚠ Partial &nbsp;❌ No
-          </p>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="section section-alt">
-        <div className="container" style={{ textAlign: 'center' }}>
-          <h2 style={{ marginBottom: '0.75rem' }}>Ready to try Ezra?</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1.75rem', fontSize: '1.0625rem' }}>
-            Download for your platform or jump into the browser playground.
-          </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/download" className="btn btn-primary btn-lg">Download Ezra</Link>
-            <Link href="/playground" className="btn btn-secondary btn-lg">Try in Browser</Link>
           </div>
         </div>
       </section>

@@ -3,464 +3,378 @@ import { useState, useRef } from 'react';
 
 const EXAMPLES = {
   'Hello World': 'say "Hello, World!"',
-  'Variables': 'name is "Ankur"\nage is 25\nsay "Hello {name}, age {age}"',
+  'Variables': 'name is "Ankur"\nage is 25\nsay "Hello {name}, you are {age} years old"',
   'Conditions': 'age is 20\ncheck if age >= 18\n  say "Adult"\notherwise\n  say "Minor"',
-  'Functions': 'give add(a, b)\n  -> a + b\nsay add(3, 4)',
-  'Lists': 'nums is [1, 2, 3, 4, 5]\nevens is nums.filter(n -> n % 2 is 0)\nsay evens',
-  'FizzBuzz': 'for each i in range(1, 21)\n  check if i % 15 is 0\n    say "FizzBuzz"\n  otherwise if i % 3 is 0\n    say "Fizz"\n  otherwise if i % 5 is 0\n    say "Buzz"\n  otherwise\n    say i',
+  'Functions': 'give add(a, b)\n  -> a + b\n\ngive square(n)\n  -> n * n\n\nsay add(3, 4)\nsay square(7)',
+  'Lists': 'nums is [1, 2, 3, 4, 5]\nsay nums[0]\nsay nums.length\nevens is nums.filter(n -> n % 2 is 0)\nsay evens\ntotal is nums.sum()\nsay total',
+  'FizzBuzz': 'i is 1\nwhile i <= 20\n  check if i % 15 is 0\n    say "FizzBuzz"\n  otherwise if i % 3 is 0\n    say "Fizz"\n  otherwise if i % 5 is 0\n    say "Buzz"\n  otherwise\n    say i\n  i += 1',
+  'Error Handling': 'try\n  x is 10 / 0\ncatch err\n  say "Caught: {err}"\nfinally\n  say "Done"',
 };
 
-/* ── Simple Ezra interpreter ── */
-function evalExpr(expr, env) {
-  expr = expr.trim();
-  if (!expr) return '';
-
-  // String literal with interpolation
-  if ((expr.startsWith('"') && expr.endsWith('"')) ||
-      (expr.startsWith("'") && expr.endsWith("'"))) {
-    return expr.slice(1, -1).replace(/\{(\w+)\}/g, (_, k) => (k in env ? env[k] : k));
-  }
-
-  // Number
-  if (/^-?\d+(\.\d+)?$/.test(expr)) return parseFloat(expr);
-
-  // Boolean / null literals
-  if (expr === 'yes') return true;
-  if (expr === 'no') return false;
-  if (expr === 'nothing') return null;
-
-  // Array literal
-  if (expr.startsWith('[') && expr.endsWith(']')) {
-    const inner = expr.slice(1, -1).trim();
-    if (!inner) return [];
-    // simple split on commas not inside brackets
-    const items = [];
-    let depth = 0, cur = '';
-    for (const ch of inner) {
-      if (ch === '[' || ch === '(') depth++;
-      else if (ch === ']' || ch === ')') depth--;
-      if (ch === ',' && depth === 0) { items.push(evalExpr(cur.trim(), env)); cur = ''; }
-      else cur += ch;
-    }
-    if (cur.trim()) items.push(evalExpr(cur.trim(), env));
-    return items;
-  }
-
-  // Method call: expr.method(args)
-  const methodMatch = expr.match(/^(.+?)\.(filter|map|len|push|pop|join|slice|reverse)\((.*)?\)$/);
-  if (methodMatch) {
-    const obj = evalExpr(methodMatch[1], env);
-    const method = methodMatch[2];
-    const rawArg = (methodMatch[3] || '').trim();
-    if (method === 'len') return Array.isArray(obj) ? obj.length : String(obj).length;
-    if (Array.isArray(obj)) {
-      if (method === 'reverse') return [...obj].reverse();
-      if (method === 'join') {
-        const sep = rawArg ? evalExpr(rawArg, env) : ',';
-        return obj.join(sep);
-      }
-      if (method === 'filter' && rawArg.includes('->')) {
-        const [param, body] = rawArg.split('->').map(s => s.trim());
-        return obj.filter(v => {
-          const tmpEnv = { ...env, [param]: v };
-          return !!evalExpr(body, tmpEnv);
-        });
-      }
-      if (method === 'map' && rawArg.includes('->')) {
-        const [param, body] = rawArg.split('->').map(s => s.trim());
-        return obj.map(v => {
-          const tmpEnv = { ...env, [param]: v };
-          return evalExpr(body, tmpEnv);
-        });
-      }
-    }
-  }
-
-  // range(start, end)
-  const rangeMatch = expr.match(/^range\((\d+),\s*(\d+)\)$/);
-  if (rangeMatch) {
-    const start = parseInt(rangeMatch[1]);
-    const end = parseInt(rangeMatch[2]);
-    return Array.from({ length: end - start }, (_, i) => start + i);
-  }
-
-  // Variable lookup
-  if (/^[a-zA-Z_]\w*$/.test(expr) && expr in env) return env[expr];
-
-  // Simple arithmetic: handle + - * / % with left-to-right precedence
-  // We try addition/subtraction first (lowest), then mul/div/mod
-  // Scan right-to-left for + or - outside parens
-  let depth2 = 0;
-  for (let i = expr.length - 1; i >= 0; i--) {
-    const ch = expr[i];
-    if (ch === ')' || ch === ']') depth2++;
-    else if (ch === '(' || ch === '[') depth2--;
-    if (depth2 === 0 && (ch === '+' || ch === '-') && i > 0) {
-      const left = evalExpr(expr.slice(0, i), env);
-      const right = evalExpr(expr.slice(i + 1), env);
-      if (typeof left === 'number' && typeof right === 'number') {
-        return ch === '+' ? left + right : left - right;
-      }
-      if (ch === '+') return String(left) + String(right);
-      return left;
-    }
-  }
-
-  // * / %
-  depth2 = 0;
-  for (let i = expr.length - 1; i >= 0; i--) {
-    const ch = expr[i];
-    if (ch === ')' || ch === ']') depth2++;
-    else if (ch === '(' || ch === '[') depth2--;
-    if (depth2 === 0 && (ch === '*' || ch === '/' || ch === '%')) {
-      const left = evalExpr(expr.slice(0, i), env);
-      const right = evalExpr(expr.slice(i + 1), env);
-      if (typeof left === 'number' && typeof right === 'number') {
-        if (ch === '*') return left * right;
-        if (ch === '/') return right !== 0 ? left / right : 'error: division by zero';
-        if (ch === '%') return ((left % right) + right) % right;
-      }
-    }
-  }
-
-  // Comparison operators
-  const cmpMatch = expr.match(/^(.+?)\s*(>=|<=|!=|is not|is|>|<)\s*(.+)$/);
-  if (cmpMatch) {
-    const left = evalExpr(cmpMatch[1], env);
-    const right = evalExpr(cmpMatch[3], env);
-    switch (cmpMatch[2].trim()) {
-      case 'is': return left == right;  // eslint-disable-line eqeqeq
-      case 'is not': return left != right;  // eslint-disable-line eqeqeq
-      case '>': return left > right;
-      case '<': return left < right;
-      case '>=': return left >= right;
-      case '<=': return left <= right;
-      case '!=': return left !== right;
-    }
-  }
-
-  // Variable still in env (catch-all)
-  if (expr in env) return env[expr];
-  return expr;
-}
-
-function runEzra(code) {
-  const lines = code.split('\n');
+/* ── Browser Ezra interpreter ─────────────────────────────────────── */
+function runEzra(source) {
+  const lines = source.split('\n');
   const output = [];
-  const env = {};
-  const functions = {};
+  const env = Object.create(null);
+  let i = 0;
 
-  function displayVal(v) {
+  function err(msg) { throw new Error(msg); }
+
+  function evalVal(raw) {
+    raw = raw.trim();
+    if (!raw) return '';
+    // string with interpolation
+    if (raw.startsWith('"') && raw.endsWith('"')) {
+      return raw.slice(1, -1).replace(/\{([^}]+)\}/g, (_, k) => {
+        const v = env[k.trim()];
+        return v !== undefined ? String(v) : k;
+      });
+    }
+    if (raw === 'yes' || raw === 'true') return true;
+    if (raw === 'no' || raw === 'false') return false;
+    if (raw === 'nothing') return null;
+    // list literal
+    if (raw.startsWith('[') && raw.endsWith(']')) {
+      const inner = raw.slice(1, -1).trim();
+      if (!inner) return [];
+      return inner.split(',').map(e => evalVal(e.trim()));
+    }
+    // simple arithmetic / comparison (basic)
+    const num = Number(raw);
+    if (!isNaN(num)) return num;
+    // variable
+    if (/^[a-zA-Z_]\w*$/.test(raw)) {
+      if (raw in env) return env[raw];
+      return raw;
+    }
+    // property access: val.method()
+    const dotCall = raw.match(/^(\w+)\.(length|sum|is_empty)\(\)$/);
+    if (dotCall) {
+      const v = env[dotCall[1]];
+      if (dotCall[2] === 'length') return Array.isArray(v) ? v.length : (String(v).length);
+      if (dotCall[2] === 'sum') return Array.isArray(v) ? v.reduce((a, b) => a + b, 0) : 0;
+      if (dotCall[2] === 'is_empty') return Array.isArray(v) ? v.length === 0 : !v;
+    }
+    // index: name[N]
+    const idx = raw.match(/^(\w+)\[(\d+)\]$/);
+    if (idx) { const v = env[idx[1]]; if (Array.isArray(v)) return v[Number(idx[2])]; }
+    // filter/map with arrow fn
+    const filterMatch = raw.match(/^(\w+)\.filter\((\w+)\s*->\s*(.+)\)$/);
+    if (filterMatch) {
+      const arr = env[filterMatch[1]];
+      if (Array.isArray(arr)) {
+        const param = filterMatch[2], body = filterMatch[3];
+        return arr.filter(item => { env[param] = item; return !!evalExpr(body); });
+      }
+    }
+    const mapMatch = raw.match(/^(\w+)\.map\((\w+)\s*->\s*(.+)\)$/);
+    if (mapMatch) {
+      const arr = env[mapMatch[1]];
+      if (Array.isArray(arr)) {
+        const param = mapMatch[2], body = mapMatch[3];
+        return arr.map(item => { env[param] = item; return evalExpr(body); });
+      }
+    }
+    // try expression eval
+    try { return evalExpr(raw); } catch { return raw; }
+  }
+
+  function evalExpr(expr) {
+    expr = expr.trim();
+    if (/^(\w+)\s*%\s*(\w+|\d+)\s*is\s*(\d+)$/.test(expr)) {
+      const m = expr.match(/^(\w+)\s*%\s*(\w+|\d+)\s*is\s*(\d+)$/);
+      return (evalVal(m[1]) % evalVal(m[2])) === Number(m[3]);
+    }
+    if (/\s+(>=|<=|==|!=|is|>|<)\s+/.test(expr)) {
+      const ops = ['>=', '<=', '==', '!=', 'is', '>', '<'];
+      for (const op of ops) {
+        const parts = expr.split(new RegExp(`\\s+${op === 'is' ? 'is' : op.replace(/[><=!]/g, '\\$&')}\\s+`));
+        if (parts.length === 2) {
+          const a = evalVal(parts[0]), b = evalVal(parts[1]);
+          if (op === '>=' || op === 'is' && typeof a === 'number') return a >= (typeof b === 'number' ? b : evalVal(parts[1]));
+          if (op === '>=') return Number(a) >= Number(b);
+          if (op === '<=') return Number(a) <= Number(b);
+          if (op === '>') return Number(a) > Number(b);
+          if (op === '<') return Number(a) < Number(b);
+          if (op === '==' || op === 'is') return a == b;
+          if (op === '!=') return a != b;
+        }
+      }
+    }
+    if (/\s*\+\s*/.test(expr) && !expr.startsWith('"')) {
+      const parts = expr.split(/\s*\+\s*/);
+      return parts.reduce((acc, p) => { const v = evalVal(p.trim()); return typeof acc === 'number' && typeof v === 'number' ? acc + v : String(acc) + String(v); }, evalVal(parts[0].trim()));
+    }
+    if (/\s*-\s*/.test(expr)) {
+      const parts = expr.split(/\s*-\s*/);
+      if (parts.length === 2) return Number(evalVal(parts[0])) - Number(evalVal(parts[1]));
+    }
+    if (/\s*\*\s*/.test(expr)) {
+      const parts = expr.split(/\s*\*\s*/);
+      if (parts.length === 2) return Number(evalVal(parts[0])) * Number(evalVal(parts[1]));
+    }
+    if (/\s*\/\s*/.test(expr)) {
+      const parts = expr.split(/\s*\/\s*/);
+      if (parts.length === 2) {
+        const b = Number(evalVal(parts[1]));
+        if (b === 0) err('divide by zero');
+        return Number(evalVal(parts[0])) / b;
+      }
+    }
+    if (/\s*%\s*/.test(expr)) {
+      const parts = expr.split(/\s*%\s*/);
+      if (parts.length === 2) return Number(evalVal(parts[0])) % Number(evalVal(parts[1]));
+    }
+    return evalVal(expr);
+  }
+
+  function fmt(v) {
     if (v === null) return 'nothing';
     if (v === true) return 'yes';
     if (v === false) return 'no';
-    if (Array.isArray(v)) return '[' + v.map(displayVal).join(', ') + ']';
+    if (Array.isArray(v)) return '[' + v.map(fmt).join(', ') + ']';
     return String(v);
   }
 
-  let i = 0;
-  const MAX_ITER = 200;
-  let iterCount = 0;
+  function getIndent(line) { return line.match(/^(\s*)/)[1].length; }
 
-  function execBlock(lines, startIdx, baseEnv) {
-    // Execute an indented block starting at startIdx, returns [lastIdx, result]
-    const blockEnv = { ...baseEnv };
-    let idx = startIdx;
-    while (idx < lines.length) {
-      const raw = lines[idx];
-      if (raw.trim() === '' || raw.trim().startsWith('#')) { idx++; continue; }
-      // Stop if dedented
-      const indent = raw.match(/^(\s*)/)[1].length;
-      if (indent === 0 && startIdx > 0) break;
-      idx = execLine(lines, idx, blockEnv);
-    }
-    return idx;
-  }
+  function execBlock(start, minIndent) {
+    let pos = start;
+    while (pos < lines.length) {
+      const line = lines[pos];
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) { pos++; continue; }
+      const indent = getIndent(line);
+      if (indent < minIndent) break;
 
-  function execLine(lines, idx, localEnv) {
-    iterCount++;
-    if (iterCount > MAX_ITER) throw new Error('Max iterations reached (infinite loop guard)');
-    const raw = lines[idx];
-    if (!raw || raw.trim() === '' || raw.trim().startsWith('#')) return idx + 1;
-    const line = raw.trim();
-
-    // say
-    if (line.startsWith('say ')) {
-      const expr = line.slice(4).trim();
-      output.push(displayVal(evalExpr(expr, localEnv)));
-      return idx + 1;
-    }
-
-    // give (function definition) — single line body only for simplicity
-    if (line.startsWith('give ')) {
-      const header = line.slice(5).trim();
-      const fnMatch = header.match(/^(\w+)\(([^)]*)\)$/);
-      if (fnMatch) {
-        const fnName = fnMatch[1];
-        const params = fnMatch[2].split(',').map(p => p.trim()).filter(Boolean);
-        // Collect body lines (indented)
-        const bodyLines = [];
-        let bi = idx + 1;
-        while (bi < lines.length && lines[bi].match(/^\s+/)) {
-          bodyLines.push(lines[bi].trim());
-          bi++;
-        }
-        functions[fnName] = { params, body: bodyLines };
-        localEnv[fnName] = (...args) => {
-          const fnEnv = { ...localEnv, ...functions };
-          params.forEach((p, pi) => { fnEnv[p] = args[pi]; });
-          let ret = undefined;
-          for (const bl of bodyLines) {
-            if (bl.startsWith('-> ')) { ret = evalExpr(bl.slice(3), fnEnv); break; }
-            else if (bl.startsWith('say ')) {
-              output.push(displayVal(evalExpr(bl.slice(4), fnEnv)));
-            } else if (/^[a-zA-Z_]\w*\s+is\s+/.test(bl)) {
-              const m = bl.match(/^([a-zA-Z_]\w*)\s+is\s+(.+)$/);
-              if (m) fnEnv[m[1]] = evalExpr(m[2], fnEnv);
-            }
+      // say
+      if (trimmed.startsWith('say ')) {
+        output.push(fmt(evalVal(trimmed.slice(4).trim())));
+        pos++; continue;
+      }
+      // assignment: name is expr  OR  name += expr
+      const compoundMatch = trimmed.match(/^([a-zA-Z_]\w*)\s*(\+=|-=|\*=|\/=)\s*(.+)$/);
+      if (compoundMatch) {
+        const [, name, op, rhs] = compoundMatch;
+        const cur = Number(env[name] || 0), val = Number(evalVal(rhs));
+        env[name] = op === '+=' ? cur + val : op === '-=' ? cur - val : op === '*=' ? cur * val : cur / val;
+        pos++; continue;
+      }
+      const assignMatch = trimmed.match(/^([a-zA-Z_]\w*)\s+is\s+(.+)$/);
+      if (assignMatch && !trimmed.startsWith('check') && !trimmed.startsWith('for') && !trimmed.startsWith('while')) {
+        env[assignMatch[1]] = evalVal(assignMatch[2]);
+        pos++; continue;
+      }
+      // check if
+      if (trimmed.startsWith('check if ')) {
+        const cond = trimmed.slice(9).trim();
+        const condResult = evalExpr(cond);
+        pos++;
+        const blockIndent = pos < lines.length ? getIndent(lines[pos]) : minIndent + 2;
+        if (blockIndent > indent) {
+          const blockEnd = execBlock(pos, blockIndent);
+          if (condResult) { pos = blockEnd; } else { pos = blockEnd; }
+          // skip otherwise blocks if condition was true
+          while (pos < lines.length) {
+            const nxt = lines[pos].trim();
+            if (nxt.startsWith('otherwise')) {
+              pos++;
+              const ob = pos < lines.length ? getIndent(lines[pos]) : indent + 2;
+              if (ob > indent) {
+                if (!condResult) pos = execBlock(pos, ob);
+                else { while (pos < lines.length && getIndent(lines[pos]) > indent) pos++; }
+              }
+            } else break;
           }
-          return ret;
-        };
-        return bi;
-      }
-    }
-
-    // Assignment: name is value
-    const assignMatch = line.match(/^([a-zA-Z_]\w*)\s+is\s+(.+)$/);
-    if (assignMatch && !line.startsWith('check') && !line.startsWith('for') && !line.startsWith('otherwise')) {
-      const val = evalExpr(assignMatch[2], localEnv);
-      localEnv[assignMatch[1]] = val;
-      env[assignMatch[1]] = val;
-      return idx + 1;
-    }
-
-    // check if / otherwise
-    if (line.startsWith('check if ')) {
-      const cond = line.slice(9).trim();
-      const result = evalExpr(cond, localEnv);
-      // collect then-block
-      let bi = idx + 1;
-      const thenLines = [];
-      while (bi < lines.length && lines[bi].match(/^\s+/)) {
-        thenLines.push(lines[bi]);
-        bi++;
-      }
-      // look for otherwise
-      const elseLines = [];
-      if (bi < lines.length && lines[bi].trim().startsWith('otherwise')) {
-        bi++;
-        while (bi < lines.length && lines[bi].match(/^\s+/)) {
-          elseLines.push(lines[bi]);
-          bi++;
         }
+        continue;
       }
-      if (result) {
-        execBlock(thenLines, 0, localEnv);
-      } else if (elseLines.length) {
-        execBlock(elseLines, 0, localEnv);
-      }
-      return bi;
-    }
-
-    // for each i in range / list
-    const forMatch = line.match(/^for each (\w+) in (.+)$/);
-    if (forMatch) {
-      const varName = forMatch[1];
-      const iterableExpr = forMatch[2].trim();
-      const iterable = evalExpr(iterableExpr, localEnv);
-      // collect body
-      let bi = idx + 1;
-      const bodyRawLines = [];
-      const baseIndent = raw.match(/^(\s*)/)[1].length;
-      while (bi < lines.length) {
-        const bl = lines[bi];
-        if (!bl.trim()) { bi++; continue; }
-        const blIndent = bl.match(/^(\s*)/)[1].length;
-        if (blIndent <= baseIndent) break;
-        bodyRawLines.push(bl);
-        bi++;
-      }
-      if (Array.isArray(iterable)) {
-        for (const item of iterable) {
-          if (iterCount > MAX_ITER) break;
-          const loopEnv = { ...localEnv, [varName]: item };
-          execBlock(bodyRawLines, 0, loopEnv);
-          // propagate mutations
-          Object.assign(localEnv, loopEnv);
+      // while
+      if (trimmed.startsWith('while ')) {
+        const cond = trimmed.slice(6).trim();
+        pos++;
+        const bi = pos < lines.length ? getIndent(lines[pos]) : indent + 2;
+        const bodyStart = pos;
+        let iters = 0;
+        while (evalExpr(cond) && iters++ < 500) {
+          pos = execBlock(bodyStart, bi);
         }
+        while (pos < lines.length && getIndent(lines[pos]) > indent) pos++;
+        continue;
       }
-      return bi;
+      // for each N in list
+      const forMatch = trimmed.match(/^for each\s+(\w+)\s+in\s+(.+)$/);
+      if (forMatch) {
+        const [, varName, listExpr] = forMatch;
+        const list = evalVal(listExpr.trim());
+        pos++;
+        const bi = pos < lines.length ? getIndent(lines[pos]) : indent + 2;
+        const bodyStart = pos;
+        if (Array.isArray(list)) {
+          for (const item of list.slice(0, 200)) {
+            env[varName] = item;
+            pos = execBlock(bodyStart, bi);
+          }
+        }
+        while (pos < lines.length && getIndent(lines[pos]) > indent) pos++;
+        continue;
+      }
+      // give (function def — skip body)
+      if (trimmed.startsWith('give ')) {
+        const fnMatch = trimmed.match(/^give\s+(\w+)\s*\(([^)]*)\)$/);
+        if (fnMatch) {
+          const fnName = fnMatch[1], params = fnMatch[2].split(',').map(p => p.trim()).filter(Boolean);
+          pos++;
+          const bi = pos < lines.length ? getIndent(lines[pos]) : indent + 2;
+          const bodyLines = [];
+          while (pos < lines.length && getIndent(lines[pos]) >= bi) { bodyLines.push(lines[pos]); pos++; }
+          env[fnName] = { __fn: true, params, body: bodyLines, baseIndent: bi };
+        } else pos++;
+        continue;
+      }
+      // function call
+      const callMatch = trimmed.match(/^(\w+)\(([^)]*)\)$/);
+      if (callMatch) {
+        const fn = env[callMatch[1]];
+        if (fn && fn.__fn) {
+          const args = callMatch[2].split(',').map(a => evalVal(a.trim()));
+          const saved = {};
+          fn.params.forEach((p, i) => { saved[p] = env[p]; env[p] = args[i]; });
+          execBlock(0, fn.baseIndent);
+          fn.params.forEach(p => { env[p] = saved[p]; });
+        }
+        pos++; continue;
+      }
+      // try/catch/finally
+      if (trimmed === 'try') {
+        pos++;
+        const bi = pos < lines.length ? getIndent(lines[pos]) : indent + 2;
+        let caught = false, catchErr = null;
+        try { pos = execBlock(pos, bi); }
+        catch (e) { caught = true; catchErr = e.message; while (pos < lines.length && getIndent(lines[pos]) > indent) pos++; }
+        if (lines[pos]?.trim().startsWith('catch')) {
+          const catchVar = lines[pos].trim().match(/^catch\s+(\w+)/)?.[1];
+          pos++;
+          const cb = pos < lines.length ? getIndent(lines[pos]) : indent + 2;
+          if (caught) { if (catchVar) env[catchVar] = catchErr; pos = execBlock(pos, cb); }
+          else { while (pos < lines.length && getIndent(lines[pos]) > indent) pos++; }
+        }
+        if (lines[pos]?.trim() === 'finally') {
+          pos++;
+          const fb = pos < lines.length ? getIndent(lines[pos]) : indent + 2;
+          pos = execBlock(pos, fb);
+        }
+        continue;
+      }
+      pos++;
     }
-
-    // Function call: name(args)
-    const callMatch = line.match(/^([a-zA-Z_]\w*)\(([^)]*)\)$/);
-    if (callMatch && callMatch[1] in localEnv && typeof localEnv[callMatch[1]] === 'function') {
-      const args = callMatch[2].split(',').map(a => evalExpr(a.trim(), localEnv));
-      localEnv[callMatch[1]](...args);
-    }
-
-    return idx + 1;
+    return pos;
   }
 
-  try {
-    while (i < lines.length) {
-      i = execLine(lines, i, env);
-    }
-  } catch (e) {
-    output.push('error: ' + e.message);
-  }
-
-  return output.join('\n') || '(no output)';
+  try { execBlock(0, 0); }
+  catch (e) { output.push(`error: ${e.message}`); }
+  return output;
 }
+/* ─────────────────────────────────────────────────────────────────── */
 
 export default function PlaygroundPage() {
   const [code, setCode] = useState(EXAMPLES['Hello World']);
-  const [output, setOutput] = useState('');
-  const [hasRun, setHasRun] = useState(false);
-  const [selectedExample, setSelectedExample] = useState('Hello World');
+  const [output, setOutput] = useState([]);
+  const [running, setRunning] = useState(false);
   const textareaRef = useRef(null);
 
-  const handleRun = () => {
+  const run = () => {
+    setRunning(true);
     try {
-      const result = runEzra(code);
-      setOutput(result);
+      const lines = runEzra(code);
+      setOutput(lines);
     } catch (e) {
-      setOutput('error: ' + e.message);
+      setOutput([`error: ${e.message}`]);
     }
-    setHasRun(true);
+    setRunning(false);
   };
 
-  const handleExampleChange = (e) => {
-    const name = e.target.value;
-    setSelectedExample(name);
-    setCode(EXAMPLES[name]);
-    setOutput('');
-    setHasRun(false);
-  };
-
-  const handleKeyDown = (e) => {
-    // Tab key inserts spaces
+  const handleKey = (e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
-      const start = e.target.selectionStart;
-      const end = e.target.selectionEnd;
-      const newCode = code.slice(0, start) + '  ' + code.slice(end);
+      const ta = textareaRef.current;
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      const newCode = code.substring(0, start) + '  ' + code.substring(end);
       setCode(newCode);
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 2;
-        }
-      }, 0);
+      requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = start + 2; });
     }
-    // Ctrl+Enter runs
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleRun();
-    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); }
   };
 
   return (
     <>
-      {/* Hero */}
-      <section className="page-hero">
-        <div className="container">
-          <p className="page-hero-tag">Playground</p>
-          <h1>Ezra Playground</h1>
-          <p>Write and run Ezra code directly in your browser. No installation needed.</p>
+      <div style={{ background: 'var(--bg-alt)', borderBottom: '1px solid var(--border)', padding: '3rem 1.5rem 2.5rem', marginTop: '64px' }}>
+        <div className="container" style={{ maxWidth: 900 }}>
+          <h1 style={{ marginBottom: '0.5rem' }}>Playground</h1>
+          <p style={{ color: 'var(--text-3)', marginBottom: 0 }}>
+            Write and run Ezra code directly in your browser. Uses a simplified interpreter —{' '}
+            <a href="/download">download Ezra</a> for the full language.
+          </p>
         </div>
-      </section>
+      </div>
 
-      <section className="section">
-        <div className="container">
-          {/* Toolbar */}
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
-            <label htmlFor="example-select" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-heading)' }}>
-              Example:
-            </label>
+      <section style={{ padding: '2.5rem 1.5rem' }}>
+        <div className="container" style={{ maxWidth: 1100 }}>
+          {/* toolbar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+            <label style={{ fontSize: '0.85rem', color: 'var(--text-3)', fontWeight: 600 }}>Examples:</label>
             <select
-              id="example-select"
-              className="playground-select"
-              value={selectedExample}
-              onChange={handleExampleChange}
+              className="example-select"
+              onChange={e => { setCode(EXAMPLES[e.target.value]); setOutput([]); }}
+              style={{ background: 'var(--bg-alt)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '0.35rem 0.65rem', fontSize: '0.85rem', fontFamily: 'var(--font)' }}
             >
-              {Object.keys(EXAMPLES).map(name => (
-                <option key={name} value={name}>{name}</option>
-              ))}
+              {Object.keys(EXAMPLES).map(k => <option key={k}>{k}</option>)}
             </select>
-            <button className="run-btn" onClick={handleRun}>
-              ▶ Run
+            <button className="run-btn" onClick={run} disabled={running} style={{ marginLeft: 'auto' }}>
+              {running ? '⏳ Running…' : '▶ Run (Ctrl+Enter)'}
             </button>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-              Ctrl+Enter to run
-            </span>
+            <button onClick={() => setOutput([])} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: '0.85rem' }}>
+              Clear output
+            </button>
           </div>
 
-          {/* Editor + Output */}
-          <div className="playground-layout">
-            {/* Editor */}
+          {/* editor + output */}
+          <div className="playground-grid">
             <div className="playground-editor">
-              <div className="playground-header">
-                <span className="playground-header-title">editor.ez</span>
-                <span style={{ fontSize: '0.7rem', color: '#6e7681' }}>Ezra</span>
+              <div className="playground-toolbar">
+                <span style={{ color: '#8b949e', fontSize: '0.78rem', fontFamily: 'var(--mono)' }}>main.ez</span>
               </div>
               <textarea
                 ref={textareaRef}
-                className="playground-textarea"
+                className="code-textarea"
                 value={code}
-                onChange={e => { setCode(e.target.value); setHasRun(false); }}
-                onKeyDown={handleKeyDown}
+                onChange={e => setCode(e.target.value)}
+                onKeyDown={handleKey}
                 spellCheck={false}
-                autoComplete="off"
+                autoCapitalize="none"
                 autoCorrect="off"
-                autoCapitalize="off"
-                aria-label="Ezra code editor"
+                placeholder="Write Ezra code here..."
               />
             </div>
-
-            {/* Output */}
             <div className="playground-output">
-              <div className="playground-header">
-                <span className="playground-header-title">output</span>
-                {hasRun && (
-                  <span style={{ fontSize: '0.7rem', color: '#56d364' }}>● ran</span>
-                )}
-              </div>
-              <div className="playground-output-body">
-                {hasRun ? (
-                  <span style={{ color: output.startsWith('error:') ? '#f85149' : '#e6edf3' }}>
-                    {output}
-                  </span>
-                ) : (
-                  <span style={{ color: '#6e7681', fontStyle: 'italic' }}>
-                    Press ▶ Run to see output
-                  </span>
-                )}
-              </div>
-              <div className="playground-note">
-                ⚠ Browser playground runs a simplified Ezra subset. Download Ezra for full language support.
+              <div className="output-header">Output</div>
+              <div className="output-body">
+                {output.length === 0
+                  ? <span style={{ color: '#8b949e' }}>Press ▶ Run to execute your code</span>
+                  : output.map((line, i) => (
+                    <div key={i} className={line.startsWith('error') ? 'output-line-err' : 'output-line-ok'}>
+                      {line}
+                    </div>
+                  ))
+                }
               </div>
             </div>
           </div>
 
-          {/* Help */}
-          <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-            <div style={{ background: 'var(--bg-light)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem' }}>
-              <p style={{ fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Supported in playground</p>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>
-                <code>say</code>, variables (<code>is</code>), arithmetic (+, -, *, /, %),
-                comparisons, <code>check if</code> / <code>otherwise</code>,
-                <code>for each</code> loops, functions (<code>give</code>), lists,
-                <code>filter</code>, <code>map</code>, <code>range</code>
-              </p>
-            </div>
-            <div style={{ background: 'var(--brand-light)', border: '1px solid var(--brand-border)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem' }}>
-              <p style={{ fontWeight: 700, color: 'var(--brand)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Want full Ezra?</p>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-body)', margin: '0 0 0.75rem' }}>
-                The playground runs a browser simulation. Download the real Ezra runtime for file I/O, error handling, JSON, and more.
-              </p>
-              <a href="/download" className="btn btn-primary btn-sm">Download Ezra</a>
-            </div>
-          </div>
+          <p style={{ marginTop: '1rem', fontSize: '0.82rem', color: 'var(--text-3)' }}>
+            ⚠ The browser playground supports a subset of Ezra: say, variables, conditions, loops, functions, lists, try/catch.{' '}
+            <a href="/download">Download Ezra</a> for the complete language including file I/O, JSON, modules, and more.
+          </p>
         </div>
       </section>
     </>

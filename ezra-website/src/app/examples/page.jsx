@@ -1,265 +1,99 @@
 'use client';
 import { useState } from 'react';
-import Link from 'next/link';
 
-const CATEGORIES = ['All', 'Basics', 'Functions', 'Collections', 'Control Flow', 'Error Handling'];
+const EXAMPLES = {
+  Basics: [
+    { title: 'Hello World', code: 'say "Hello, World!"' },
+    { title: 'Variables', code: 'name is "Rana"\nage  is 25\nsay "Hello {name}, age {age}"' },
+    { title: 'Text Interpolation', code: 'x is 42\nsay "The answer is {x}"\nsay "Double: {x * 2}"' },
+    { title: 'Conditions', code: 'score is 85\ncheck if score >= 90\n  say "A"\notherwise if score >= 75\n  say "B"\notherwise\n  say "Try again"' },
+  ],
+  Functions: [
+    { title: 'Define and call', code: 'give add(a, b)\n  -> a + b\n\nsay add(3, 4)   # 7' },
+    { title: 'Factorial', code: 'give factorial(n)\n  check if n <= 1\n    -> 1\n  -> n * factorial(n - 1)\n\nsay factorial(10)   # 3628800' },
+    { title: 'Arrow function', code: 'double is n -> n * 2\nsay double(5)   # 10' },
+    { title: 'Higher-order', code: 'nums is [1, 2, 3, 4, 5]\nevens is nums.filter(n -> n % 2 is 0)\nsay evens   # [2, 4]' },
+  ],
+  Collections: [
+    { title: 'List operations', code: 'nums is [3, 1, 4, 1, 5]\nsay nums.sort()     # [1, 1, 3, 4, 5]\nsay nums.sum()      # 14\nsay nums.avg()      # 2.8' },
+    { title: 'Map & filter', code: 'nums is [1, 2, 3, 4, 5]\ndoubled is nums.map(n -> n * 2)\nevens   is nums.filter(n -> n % 2 is 0)\nsay doubled   # [2, 4, 6, 8, 10]\nsay evens     # [2, 4]' },
+    { title: 'Objects', code: 'user is { name: "Rana", age: 25, city: "Delhi" }\nsay user.name          # Rana\nsay user["age"]        # 25\nsay user.keys()        # [age, city, name]' },
+    { title: 'Reduce', code: 'nums is [1, 2, 3, 4, 5]\ntotal is nums.reduce((acc, n) -> acc + n, 0)\nsay total   # 15' },
+  ],
+  'Error Handling': [
+    { title: 'try/catch/finally', code: 'try\n  result is 10 / 0\ncatch err\n  say "Caught: {err}"\nfinally\n  say "Always runs"' },
+    { title: 'throw', code: 'give check_age(age)\n  check if age < 0\n    throw "Age cannot be negative"\n  -> age\n\ntry\n  check_age(-1)\ncatch err\n  say "Error: {err}"' },
+    { title: 'assert', code: 'x is 42\nassert x > 0, "x must be positive"\nsay "Assertion passed"' },
+  ],
+  JSON: [
+    { title: 'Parse & stringify', code: 'data is { name: "Ezra", version: 1 }\njson is stringify_json(data)\nsay json\n\nparsed is parse_json(json)\nsay parsed.name   # Ezra' },
+    { title: 'Nested objects', code: 'data is parse_json("{\"user\":{\"name\":\"Rana\",\"age\":25}}")\nsay data.user.name   # Rana\nsay data.user.age    # 25' },
+  ],
+  'Pattern Matching': [
+    { title: 'pick/when', code: 'day is "monday"\npick day\n  when "monday"\n    say "Start of the week"\n  when "friday"\n    say "Almost weekend!"\n  otherwise\n    say "Regular day"' },
+    { title: 'FizzBuzz', code: 'i is 1\nwhile i <= 15\n  check if i % 15 is 0\n    say "FizzBuzz"\n  otherwise if i % 3 is 0\n    say "Fizz"\n  otherwise if i % 5 is 0\n    say "Buzz"\n  otherwise\n    say i\n  i += 1' },
+  ],
+};
 
-const EXAMPLES = [
-  {
-    category: 'Basics',
-    title: 'Hello World',
-    desc: 'The classic first program.',
-    code: `say "Hello, World!"`,
-  },
-  {
-    category: 'Basics',
-    title: 'Variables & Types',
-    desc: 'Declaring variables using the is keyword.',
-    code: `name is "Ankur"
-age is 25
-pi is 3.14159
-active is yes
-
-say name
-say age
-say pi
-say active`,
-  },
-  {
-    category: 'Basics',
-    title: 'String Interpolation',
-    desc: 'Embed variables directly in strings.',
-    code: `name is "Ankur"
-lang is "Ezra"
-version is "1.0.0"
-say "Hello, {name}! Welcome to {lang} {version}."`,
-  },
-  {
-    category: 'Functions',
-    title: 'Basic Function',
-    desc: 'Define and call a function with give.',
-    code: `give add(a, b)
-  -> a + b
-
-give greet(name)
-  -> "Hello, {name}!"
-
-say add(10, 5)
-say greet("World")`,
-  },
-  {
-    category: 'Functions',
-    title: 'Arrow Functions (Lambdas)',
-    desc: 'Short one-liner arrow functions.',
-    code: `double is n -> n * 2
-square is n -> n * n
-
-say double(7)
-say square(5)`,
-  },
-  {
-    category: 'Collections',
-    title: 'List Basics',
-    desc: 'Creating and accessing lists.',
-    code: `fruits is ["apple", "banana", "cherry"]
-say fruits
-say fruits.len()`,
-  },
-  {
-    category: 'Collections',
-    title: 'Filter & Map',
-    desc: 'Functional list operations.',
-    code: `nums is [1, 2, 3, 4, 5, 6, 7, 8]
-
-evens is nums.filter(n -> n % 2 is 0)
-doubled is nums.map(n -> n * 2)
-big is nums.filter(n -> n > 4)
-
-say evens
-say doubled
-say big`,
-  },
-  {
-    category: 'Collections',
-    title: 'Dict / Map',
-    desc: 'Key-value collections.',
-    code: `person is {name: "Ankur", age: 25, lang: "Ezra"}
-say person.name
-say person.age`,
-  },
-  {
-    category: 'Control Flow',
-    title: 'If / Otherwise',
-    desc: 'Conditional logic.',
-    code: `age is 20
-
-check if age >= 18
-  say "You are an adult."
-otherwise
-  say "You are a minor."`,
-  },
-  {
-    category: 'Control Flow',
-    title: 'FizzBuzz',
-    desc: 'Classic FizzBuzz with for each loop.',
-    code: `for each i in range(1, 21)
-  check if i % 15 is 0
-    say "FizzBuzz"
-  otherwise if i % 3 is 0
-    say "Fizz"
-  otherwise if i % 5 is 0
-    say "Buzz"
-  otherwise
-    say i`,
-  },
-  {
-    category: 'Control Flow',
-    title: 'While Loop',
-    desc: 'Looping with a while condition.',
-    code: `count is 0
-while count < 5
-  say "count: {count}"
-  count is count + 1`,
-  },
-  {
-    category: 'Error Handling',
-    title: 'Attempt / Rescue',
-    desc: 'Catch and handle errors gracefully.',
-    code: `attempt
-  result is int("not a number")
-  say result
-rescue err
-  say "Error caught: {err}"`,
-  },
-];
-
-function highlight(code) {
-  return code
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/(#[^\n]*)/g, '<span class="tok-comment">$1</span>')
-    .replace(/\b(say|give|is|check|if|otherwise|for|each|in|while|attempt|rescue|return|and|or|not|yes|no|nothing)\b/g, '<span class="tok-keyword">$1</span>')
-    .replace(/("(?:[^"\\]|\\.)*")/g, '<span class="tok-string">$1</span>')
-    .replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-number">$1</span>')
-    .replace(/(->)/g, '<span class="tok-op">$1</span>');
-}
-
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false);
-  const handle = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-  return (
-    <button
-      onClick={handle}
-      style={{
-        background: 'rgba(255,255,255,0.08)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        color: copied ? '#56d364' : '#8b949e',
-        fontSize: '0.7rem',
-        padding: '0.2rem 0.5rem',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontFamily: 'var(--font-sans)',
-      }}
-    >
-      {copied ? '✓' : 'Copy'}
-    </button>
-  );
+function HLCode({ code }) {
+  const h = code
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\b(give|check if|otherwise if|otherwise|repeat|for each|while|until|try|catch|finally|throw|pick|when|return|break|next|assert)\b/g,'<span style="color:#ff7b72">$1</span>')
+    .replace(/"([^"]*)"/g,'<span style="color:#a5d6ff">"$1"</span>')
+    .replace(/\b(say|write|input|len|range|type_of|parse_json|stringify_json|read_file|write_file)\b/g,'<span style="color:#d2a8ff">$1</span>')
+    .replace(/\b(\d+(?:\.\d+)?)\b/g,'<span style="color:#79c0ff">$1</span>')
+    .replace(/(#[^\n]*)/g,'<span style="color:#8b949e">$1</span>')
+    .replace(/\b(is|->)\b/g,'<span style="color:#ffa657">$1</span>');
+  return <code dangerouslySetInnerHTML={{ __html: h }} />;
 }
 
 export default function ExamplesPage() {
-  const [activeCategory, setActiveCategory] = useState('All');
-
-  const filtered = EXAMPLES.filter(
-    e => activeCategory === 'All' || e.category === activeCategory
-  );
+  const [cat, setCat] = useState('Basics');
+  const [copied, setCopied] = useState('');
+  const copy = (code, key) => { navigator.clipboard.writeText(code).then(() => { setCopied(key); setTimeout(() => setCopied(''), 2000); }); };
 
   return (
     <>
-      {/* Hero */}
-      <section className="page-hero">
-        <div className="container">
-          <p className="page-hero-tag">Examples</p>
-          <h1>Ezra Examples</h1>
-          <p>Browse real Ezra programs covering common patterns and language features.</p>
-        </div>
-      </section>
-
-      {/* Category filter */}
-      <div style={{ background: 'var(--bg-white)', borderBottom: '1px solid var(--border)', padding: '0 0' }}>
-        <div className="container">
-          <div className="tab-bar">
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                className={`tab-btn${activeCategory === cat ? ' active' : ''}`}
-                onClick={() => setActiveCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+      <div style={{ background: 'var(--bg-alt)', borderBottom: '1px solid var(--border)', padding: '4rem 1.5rem 3rem', marginTop: '64px' }}>
+        <div className="container" style={{ maxWidth: 700, textAlign: 'center' }}>
+          <h1 style={{ marginBottom: '0.75rem' }}>Examples</h1>
+          <p style={{ color: 'var(--text-3)', fontSize: '1.05rem' }}>Annotated Ezra code samples covering the most common patterns.</p>
         </div>
       </div>
 
-      {/* Examples grid */}
       <section className="section">
         <div className="container">
-          <div className="examples-grid">
-            {filtered.map(ex => (
-              <div key={ex.title} className="example-card">
-                <div className="example-card-header">
-                  <div>
-                    <div className="example-card-title">{ex.title}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>{ex.desc}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
-                      color: 'var(--brand)',
-                      background: 'var(--brand-light)',
-                      padding: '0.15em 0.5em',
-                      borderRadius: '99px',
-                      border: '1px solid var(--brand-border)',
-                    }}>
-                      {ex.category}
-                    </span>
-                    <CopyButton text={ex.code} />
-                  </div>
-                </div>
-                <pre
-                  className="example-card-code"
-                  dangerouslySetInnerHTML={{ __html: highlight(ex.code) }}
-                />
-              </div>
+          {/* Category tabs */}
+          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginBottom: '2.5rem', borderBottom: '2px solid var(--border)', paddingBottom: '0' }}>
+            {Object.keys(EXAMPLES).map(c => (
+              <button key={c} onClick={() => setCat(c)}
+                style={{ padding: '0.6rem 1.1rem', background: 'none', border: 'none', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font)', transition: 'all 0.15s',
+                  color: cat === c ? 'var(--brand)' : 'var(--text-3)',
+                  borderBottom: `2px solid ${cat === c ? 'var(--brand)' : 'transparent'}`,
+                  marginBottom: '-2px' }}
+              >{c}</button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* CTA */}
-      <section className="section section-alt">
-        <div className="container" style={{ textAlign: 'center' }}>
-          <h2 style={{ marginBottom: '0.75rem' }}>Try these examples live</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1.75rem' }}>
-            Paste any example into the playground and run it in your browser.
-          </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/playground" className="btn btn-primary">Open Playground</Link>
-            <a
-              href="https://github.com/ranaji114/Ezra-programming-lang/tree/main/examples"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary"
-            >
-              More on GitHub →
-            </a>
+          {/* Example cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(360px,1fr))', gap: '1.25rem' }}>
+            {EXAMPLES[cat].map((ex, i) => {
+              const key = `${cat}-${i}`;
+              return (
+                <div key={key} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-alt)' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{ex.title}</span>
+                    <button onClick={() => copy(ex.code, key)}
+                      style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 8px', fontSize: '0.75rem', cursor: 'pointer', color: copied === key ? 'var(--green)' : 'var(--text-3)', fontFamily: 'var(--font)', transition: 'all 0.15s' }}>
+                      {copied === key ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <pre style={{ margin: 0, padding: '1.25rem', borderRadius: 0, border: 'none', fontSize: '0.85rem', overflowX: 'auto' }}>
+                    <HLCode code={ex.code} />
+                  </pre>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

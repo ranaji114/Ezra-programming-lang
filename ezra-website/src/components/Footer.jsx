@@ -1,115 +1,69 @@
 ﻿'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer-grid">
-          {/* Brand */}
           <div>
-            <div className="footer-brand-logo">
-              <div className="footer-logo-box">E</div>
-              <span className="footer-name">Ezra</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+              <Image src="/ezra-logo.png" alt="Ezra" width={28} height={28} style={{ borderRadius: 7 }} />
+              <span className="footer-brand" style={{ color: '#f9fafb', fontWeight: 700, fontSize: '1.1rem' }}>Ezra</span>
             </div>
-            <p className="footer-desc">
-              A readable scripting language built in Rust. Simple syntax, fast execution,
-              and a great developer experience — for everyone.
+            <p style={{ color: '#6b7280', fontSize: '0.875rem', lineHeight: 1.6, maxWidth: 260 }}>
+              A readable scripting language built in Rust.<br />
+              Created by <a href="https://github.com/ranaji114" target="_blank" rel="noopener noreferrer" style={{ color: '#e8600a' }}>Ankur Rana</a>.
             </p>
-            <a
-              href="https://github.com/ranaji114/Ezra-programming-lang"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-ghost btn-sm"
-              style={{ borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.75)' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-              </svg>
-              GitHub
-            </a>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+              <span style={{ background: 'rgba(232,96,10,0.15)', color: '#f97316', border: '1px solid rgba(232,96,10,0.25)', padding: '2px 8px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 600 }}>v1.0.0</span>
+              <span style={{ background: 'rgba(22,163,74,0.12)', color: '#4ade80', border: '1px solid rgba(22,163,74,0.2)', padding: '2px 8px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 600 }}>MIT</span>
+              <span style={{ background: 'rgba(255,255,255,0.06)', color: '#9ca3af', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 600 }}>Rust</span>
+            </div>
           </div>
 
-          {/* Language */}
-          <div>
-            <p className="footer-col-title">Language</p>
-            <ul className="footer-links">
-              <li><Link href="/docs">Documentation</Link></li>
+          <div className="footer-col">
+            <h4>Language</h4>
+            <ul>
               <li><a href="https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/getting-started.md" target="_blank" rel="noopener noreferrer">Getting Started</a></li>
+              <li><a href="https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/tutorial.md" target="_blank" rel="noopener noreferrer">Tutorial</a></li>
               <li><a href="https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/language-reference.md" target="_blank" rel="noopener noreferrer">Language Reference</a></li>
               <li><a href="https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/stdlib/index.md" target="_blank" rel="noopener noreferrer">Standard Library</a></li>
-              <li><Link href="/examples">Examples</Link></li>
-              <li><Link href="/playground">Playground</Link></li>
+              <li><Link href="/examples" style={{ color: '#9ca3af' }}>Examples</Link></li>
             </ul>
           </div>
 
-          {/* Download */}
-          <div>
-            <p className="footer-col-title">Download</p>
-            <ul className="footer-links">
-              <li><Link href="/download">All Downloads</Link></li>
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/EzraSetup-1.0.0.exe">
-                  Windows (.exe)
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-linux-x86_64-1.0.0.tar.gz">
-                  Linux (x64)
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-macos-aarch64-1.0.0.tar.gz">
-                  macOS (ARM64)
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-lang-1.0.0.vsix">
-                  VS Code Extension
-                </a>
-              </li>
+          <div className="footer-col">
+            <h4>Download</h4>
+            <ul>
+              <li><Link href="/download" style={{ color: '#9ca3af' }}>Windows</Link></li>
+              <li><Link href="/download" style={{ color: '#9ca3af' }}>Linux</Link></li>
+              <li><Link href="/download" style={{ color: '#9ca3af' }}>macOS</Link></li>
+              <li><a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-lang-1.0.0.vsix" style={{ color: '#9ca3af' }}>VS Code Extension</a></li>
+              <li><a href="https://github.com/ranaji114/Ezra-programming-lang/releases" target="_blank" rel="noopener noreferrer">All Releases</a></li>
             </ul>
           </div>
 
-          {/* Community */}
-          <div>
-            <p className="footer-col-title">Community</p>
-            <ul className="footer-links">
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang" target="_blank" rel="noopener noreferrer">
-                  GitHub Repository
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang/issues" target="_blank" rel="noopener noreferrer">
-                  Report an Issue
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang/discussions" target="_blank" rel="noopener noreferrer">
-                  Discussions
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/contributing.md" target="_blank" rel="noopener noreferrer">
-                  Contributing
-                </a>
-              </li>
-              <li><Link href="/about">About Ezra</Link></li>
+          <div className="footer-col">
+            <h4>Community</h4>
+            <ul>
+              <li><a href="https://github.com/ranaji114/Ezra-programming-lang" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li><a href="https://github.com/ranaji114/Ezra-programming-lang/issues" target="_blank" rel="noopener noreferrer">Report a Bug</a></li>
+              <li><a href="https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/contributing.md" target="_blank" rel="noopener noreferrer">Contributing</a></li>
+              <li><Link href="/about" style={{ color: '#9ca3af' }}>About Ezra</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>© 2026 Ezra Language · Created by Ankur Rana · MIT License</span>
-          <a
-            href="https://github.com/ranaji114/Ezra-programming-lang"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'rgba(255,255,255,0.45)' }}
-          >
-            github.com/ranaji114/Ezra-programming-lang
-          </a>
+          <p>© 2026 Ezra Language · Created by <a href="https://github.com/ranaji114" target="_blank" rel="noopener noreferrer">Ankur Rana</a> · MIT License</p>
+          <p style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+            <a href="https://github.com/ranaji114/Ezra-programming-lang" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <Link href="/download" style={{ color: '#9ca3af' }}>Download</Link>
+            <Link href="/docs" style={{ color: '#9ca3af' }}>Docs</Link>
+            <Link href="/playground" style={{ color: '#9ca3af' }}>Playground</Link>
+          </p>
         </div>
       </div>
     </footer>
