@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   images: {
     unoptimized: true,
   },
   trailingSlash: true,
   reactStrictMode: true,
-  // No basePath needed for Vercel/Netlify — they serve from root
+  // NOTE: output: 'export' removed so Vercel can serve the site properly.
+  // Static files in public/ (including /downloads/) are served by Vercel automatically.
 }
 
 module.exports = nextConfig
