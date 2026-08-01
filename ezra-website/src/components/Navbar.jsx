@@ -1,163 +1,86 @@
 'use client';
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [stars, setStars] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const navLinks = [
-    { path: '/', label: 'Home' },
-    { path: '/download', label: 'Download' },
-    { path: '/docs', label: 'Docs' },
-    { path: '/examples', label: 'Examples' },
-    { path: '/playground', label: 'Playground' },
-    { path: '/about', label: 'About' },
-    { path: '/community', label: 'Community' },
-    { path: '/support', label: 'Support' },
-    { path: '/blog', label: 'Blog' },
+  useEffect(() => {
+    fetch('https://api.github.com/repos/ranaji114/Ezra-programming-lang', { headers: { 'User-Agent': 'ezra-site' } })
+      .then(r => r.json()).then(d => setStars(d.stargazers_count)).catch(() => {});
+  }, []);
+
+  const links = [
+    { href: '/', label: 'Home' },
+    { href: '/download', label: 'Download' },
+    { href: '/docs', label: 'Docs' },
+    { href: '/examples', label: 'Examples' },
+    { href: '/about', label: 'About' },
   ];
 
   return (
-    <>
-      <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
-        <div className="navbar-content">
-          <Link href="/" className="logo">
-            <div className="logo-icon">E</div>
-            <span>Ezra</span>
-          </Link>
+    <nav className={`navbar${scrolled ? ' scrolled' : ''}`}>
+      <div className="navbar-inner">
+        <Link href="/" className="nav-logo">
+          <div className="logo-mark">E</div>
+          <span>Ezra</span>
+        </Link>
 
-          <div className="nav-links-container">
-            <ul className="nav-links">
-              {navLinks.map((link) => (
-                <li key={link.path}>
-                  <Link
-                    href={link.path}
-                    className={`nav-link ${pathname === link.path ? 'active' : ''}`}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <ul className="nav-links">
+          {links.map(l => (
+            <li key={l.href}>
+              <Link href={l.href} className={pathname === l.href ? 'active' : ''}>{l.label}</Link>
+            </li>
+          ))}
+        </ul>
 
+        <div className="nav-right">
+          {stars !== null && (
+            <a href="https://github.com/ranaji114/Ezra-programming-lang" target="_blank" rel="noopener noreferrer" className="nav-stars" style={{textDecoration:'none'}}>
+              <span>★</span> {stars.toLocaleString()}
+            </a>
+          )}
+          <Link href="/download" className="btn btn-primary btn-sm">Download</Link>
           <button
-            className="mobile-menu-toggle"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
+            className="mobile-toggle"
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={{background:'none',border:'none',color:'var(--text)',cursor:'pointer',padding:'0.4rem',display:'none'}}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {isMobileMenuOpen ? (
-                <>
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </>
-              )}
-            </svg>
+            {menuOpen ? '✕' : '☰'}
           </button>
         </div>
+      </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="mobile-menu">
-            <ul className="mobile-nav-links">
-              {navLinks.map((link) => (
-                <li key={link.path}>
-                  <Link
-                    href={link.path}
-                    className={`nav-link ${pathname === link.path ? 'active' : ''}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </nav>
+      {menuOpen && (
+        <div style={{background:'rgba(10,10,15,0.97)',borderTop:'1px solid var(--border)',padding:'1rem 1.5rem'}}>
+          {links.map(l => (
+            <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
+              style={{display:'block',padding:'0.75rem 0',color:'var(--text-2)',borderBottom:'1px solid var(--border)'}}>
+              {l.label}
+            </Link>
+          ))}
+          <Link href="/download" className="btn btn-primary" style={{width:'100%',marginTop:'1rem',justifyContent:'center'}} onClick={() => setMenuOpen(false)}>
+            Download Ezra
+          </Link>
+        </div>
+      )}
 
       <style jsx>{`
-        .navbar.scrolled {
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .mobile-menu-toggle {
-          display: none;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0.5rem;
-          color: var(--color-text);
-        }
-
-        .mobile-menu {
-          display: none;
-        }
-
         @media (max-width: 768px) {
-          .nav-links-container {
-            display: none;
-          }
-
-          .mobile-menu-toggle {
-            display: block;
-          }
-
-          .mobile-menu {
-            display: block;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--color-bg);
-            border-bottom: 1px solid var(--color-border);
-            padding: 1rem;
-            z-index: 99;
-          }
-
-          .mobile-nav-links {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-          }
-
-          .mobile-nav-links .nav-link {
-            padding: 0.75rem 1rem;
-            display: block;
-          }
+          .nav-links { display: none !important; }
+          .mobile-toggle { display: block !important; }
         }
       `}</style>
-    </>
+    </nav>
   );
 }
