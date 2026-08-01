@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-const RELEASE = 'https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0';
+const RELEASE = '/downloads';
 
 const EXAMPLES = {
   'Hello World': `name is input "Your name: "
@@ -75,7 +75,7 @@ export default function HomePage() {
               Write scripts that are easy to read, easy to run, and hard to break.
             </p>
             <div className="hero-actions">
-              <a href={`${RELEASE}/EzraSetup-1.0.0.exe`} className="btn btn-primary btn-lg" download>
+              <a href="/downloads/EzraSetup-1.0.0.exe" className="btn btn-primary btn-lg" download>
                 ⬇ Download for Windows
               </a>
               <Link href="/download" className="btn btn-secondary btn-lg">All Platforms</Link>
@@ -114,9 +114,9 @@ export default function HomePage() {
       <div className="install-banner">
         <p>Install Ezra in seconds:</p>
         <div className="install-banner-actions">
-          <a href={`${RELEASE}/EzraSetup-1.0.0.exe`} className="btn btn-secondary btn-sm" download>🪟 Windows .exe</a>
-          <a href={`${RELEASE}/ezra-linux-x86_64-1.0.0.tar.gz`} className="btn btn-secondary btn-sm" download>🐧 Linux .tar.gz</a>
-          <a href={`${RELEASE}/ezra-macos-aarch64-1.0.0.tar.gz`} className="btn btn-secondary btn-sm" download>🍎 macOS .tar.gz</a>
+          <a href="/downloads/EzraSetup-1.0.0.exe" className="btn btn-secondary btn-sm" download>🪟 Windows .exe</a>
+          <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-linux-x86_64-1.0.0.tar.gz" className="btn btn-secondary btn-sm" download>🐧 Linux .tar.gz</a>
+          <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-macos-aarch64-1.0.0.tar.gz" className="btn btn-secondary btn-sm" download>🍎 macOS .tar.gz</a>
           <Link href="/download" className="btn btn-secondary btn-sm">All options →</Link>
         </div>
       </div>
