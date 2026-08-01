@@ -1,152 +1,148 @@
 ﻿'use client';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 
-const BASE = 'https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0';
-
-export default function DownloadPage() {
-  const [copied, setCopied] = useState('');
-
-  const copy = (text, id) => {
+function CopyButton({ text, label = 'Copy' }) {
+  const [copied, setCopied] = useState(false);
+  const handle = () => {
     navigator.clipboard.writeText(text).then(() => {
-      setCopied(id);
-      setTimeout(() => setCopied(''), 2000);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
+  return (
+    <button className={`copy-btn${copied ? ' copied' : ''}`} onClick={handle}>
+      {copied ? '✓ Copied' : label}
+    </button>
+  );
+}
 
-  const CmdBlock = ({ cmd, id }) => (
-    <div className="cmd-block">
-      <code style={{ flex: 1, wordBreak: 'break-all' }}>{cmd}</code>
-      <button className="cmd-copy" onClick={() => copy(cmd, id)} title="Copy">
-        {copied === id ? '✓' : '⎘'}
-      </button>
+function InlineCmd({ cmd }) {
+  return (
+    <div className="inline-cmd">
+      <code>{cmd}</code>
+      <CopyButton text={cmd} />
     </div>
   );
+}
 
+export default function DownloadPage() {
   return (
     <>
-      <div style={{ paddingTop: '72px', background: 'linear-gradient(180deg,var(--bg-2) 0%,var(--bg) 100%)', borderBottom: '1px solid var(--border)' }}>
-        <div className="container" style={{ padding: '4rem 1.5rem 3rem', textAlign: 'center' }}>
-          <span className="badge badge-cyan" style={{ marginBottom: '1rem', display: 'inline-block' }}>v1.0.0 — Latest Release</span>
-          <h1>Download <span className="text-gradient">Ezra</span></h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '520px', margin: '0 auto 2rem' }}>
-            Free, open-source, no account needed. Pick your platform and start in minutes.
-          </p>
-          <a href={`${BASE}/EzraSetup-1.0.0.exe`} className="btn btn-accent btn-lg" download>
-            ⬇ Download for Windows — Free
-          </a>
+      {/* Hero */}
+      <section className="page-hero blue">
+        <div className="container">
+          <p className="page-hero-tag">Download</p>
+          <h1>Download Ezra v1.0.0</h1>
+          <p>Get the Ezra programming language for your platform. Free, open source, MIT licensed.</p>
         </div>
-      </div>
+      </section>
 
+      {/* Platform Cards */}
       <section className="section">
         <div className="container">
-          <div className="section-header">
-            <h2>Choose Your <span className="text-gradient">Platform</span></h2>
+          <div className="section-heading">
+            <span className="section-tag">Platforms</span>
+            <h2>Choose your platform</h2>
+            <p>Native binaries for Windows, Linux, and macOS.</p>
           </div>
+          <div className="platform-grid">
 
-          <div className="platform-cards">
-            {/* WINDOWS */}
-            <div className="card platform-card recommended">
+            {/* Windows */}
+            <div className="platform-card">
               <div className="platform-icon">🪟</div>
-              <h3>Windows</h3>
-              <p className="sub">Windows 10 / 11 (64-bit)</p>
-
-              <a href={`${BASE}/EzraSetup-1.0.0.exe`} className="download-btn" download>
-                <div className="dl-info">
-                  <span className="dl-name">EzraSetup-1.0.0.exe</span>
-                  <span className="dl-size">48 KB · GUI Installer · Adds to PATH automatically</span>
-                </div>
-                <span className="dl-arrow">⬇</span>
+              <div className="platform-name">Windows</div>
+              <div className="platform-arch">x86_64 · Windows 10 / 11</div>
+              <a
+                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/EzraSetup-1.0.0.exe"
+                className="download-btn-main"
+              >
+                ⬇ EzraSetup-1.0.0.exe <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>(48 KB)</span>
               </a>
-
-              <a href={`${BASE}/ezra-windows-x86_64-1.0.0.zip`} className="download-btn" download>
-                <div className="dl-info">
-                  <span className="dl-name">ezra-windows-x86_64-1.0.0.zip</span>
-                  <span className="dl-size">1.5 MB · ZIP Archive · Manual install</span>
-                </div>
-                <span className="dl-arrow">⬇</span>
+              <a
+                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-windows-x86_64-1.0.0.zip"
+                className="download-link-alt"
+              >
+                ⬇ ezra-windows-x86_64-1.0.0.zip (portable)
               </a>
-
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: '1rem' }}>Or run via PowerShell:</p>
-              <CmdBlock cmd="powershell -ExecutionPolicy Bypass -File install\install.ps1" id="win-ps" />
-
-              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 'var(--radius)', fontSize: '0.82rem', color: '#fbbf24' }}>
-                ⚠ Windows may show "Protected your PC" — click <strong>More info → Run anyway</strong>. Normal for unsigned open-source software.
-              </div>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '0.25rem' }}>
+                Or install via PowerShell:
+              </p>
+              <InlineCmd cmd={`irm https://raw.githubusercontent.com/ranaji114/Ezra-programming-lang/main/installers/windows/install.ps1 | iex`} />
             </div>
 
-            {/* LINUX */}
-            <div className="card platform-card">
+            {/* Linux */}
+            <div className="platform-card">
               <div className="platform-icon">🐧</div>
-              <h3>Linux</h3>
-              <p className="sub">Ubuntu, Debian, Fedora, Arch and more</p>
-
-              <a href={`${BASE}/ezra-linux-x86_64-1.0.0.tar.gz`} className="download-btn" download>
-                <div className="dl-info">
-                  <span className="dl-name">ezra-linux-x86_64-1.0.0.tar.gz</span>
-                  <span className="dl-size">x86_64 · tar.gz archive</span>
-                </div>
-                <span className="dl-arrow">⬇</span>
+              <div className="platform-name">Linux</div>
+              <div className="platform-arch">x86_64 · ARM64</div>
+              <a
+                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-linux-x86_64-1.0.0.tar.gz"
+                className="download-btn-main"
+              >
+                ⬇ ezra-linux-x86_64-1.0.0.tar.gz
               </a>
-
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '1rem', marginBottom: '0.75rem' }}>Or one-line install:</p>
-              <CmdBlock cmd="sh install/install.sh" id="lin-sh" />
-
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.75rem', marginBottom: '0.75rem' }}>ARM64 (Raspberry Pi, AWS Graviton):</p>
-              <a href={`${BASE}/ezra-linux-aarch64-1.0.0.tar.gz`} className="download-btn" download>
-                <div className="dl-info">
-                  <span className="dl-name">ezra-linux-aarch64-1.0.0.tar.gz</span>
-                  <span className="dl-size">ARM64 · tar.gz archive</span>
-                </div>
-                <span className="dl-arrow">⬇</span>
+              <a
+                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-linux-aarch64-1.0.0.tar.gz"
+                className="download-link-alt"
+              >
+                ⬇ ezra-linux-aarch64-1.0.0.tar.gz (ARM64)
               </a>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '0.25rem' }}>
+                Or install via shell script:
+              </p>
+              <InlineCmd cmd="sh install/install.sh" />
             </div>
 
-            {/* MACOS */}
-            <div className="card platform-card">
+            {/* macOS */}
+            <div className="platform-card">
               <div className="platform-icon">🍎</div>
-              <h3>macOS</h3>
-              <p className="sub">macOS 10.15+ · Intel & Apple Silicon</p>
-
-              <a href={`${BASE}/ezra-macos-aarch64-1.0.0.tar.gz`} className="download-btn" download>
-                <div className="dl-info">
-                  <span className="dl-name">ezra-macos-aarch64-1.0.0.tar.gz</span>
-                  <span className="dl-size">Apple Silicon (M1/M2/M3)</span>
-                </div>
-                <span className="dl-arrow">⬇</span>
+              <div className="platform-name">macOS</div>
+              <div className="platform-arch">Apple Silicon (ARM64) · Intel (x64)</div>
+              <a
+                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-macos-aarch64-1.0.0.tar.gz"
+                className="download-btn-main"
+              >
+                ⬇ ezra-macos-aarch64-1.0.0.tar.gz
               </a>
-
-              <a href={`${BASE}/ezra-macos-x86_64-1.0.0.tar.gz`} className="download-btn" download>
-                <div className="dl-info">
-                  <span className="dl-name">ezra-macos-x86_64-1.0.0.tar.gz</span>
-                  <span className="dl-size">Intel Mac</span>
-                </div>
-                <span className="dl-arrow">⬇</span>
+              <a
+                href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-macos-x86_64-1.0.0.tar.gz"
+                className="download-link-alt"
+              >
+                ⬇ ezra-macos-x86_64-1.0.0.tar.gz (Intel)
               </a>
-
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '1rem', marginBottom: '0.75rem' }}>Or one-line install:</p>
-              <CmdBlock cmd="sh install/install.sh" id="mac-sh" />
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '0.25rem' }}>
+                Or install via shell script:
+              </p>
+              <InlineCmd cmd="sh install/install.sh" />
             </div>
           </div>
         </div>
       </section>
 
       {/* VS Code Extension */}
-      <section className="section" style={{ background: 'var(--bg-2)', paddingTop: '2rem', paddingBottom: '4rem' }}>
+      <section className="section section-alt">
         <div className="container">
-          <div className="section-header">
-            <h2>VS Code <span className="text-gradient">Extension</span></h2>
-            <p>Syntax highlighting, Ezra Neon theme, 30+ snippets, and LSP support.</p>
-          </div>
-          <div className="card" style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⬛</div>
-            <h3 style={{ marginBottom: '0.5rem' }}>ezra-lang-1.0.0.vsix</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-              Download the VSIX, then: VS Code → Extensions (Ctrl+Shift+X) → ··· → Install from VSIX
-            </p>
-            <a href={`${BASE}/ezra-lang-1.0.0.vsix`} className="btn btn-primary btn-lg" download style={{ display: 'inline-flex' }}>
-              ⬇ Download VSIX (30 KB)
+          <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <div className="section-heading" style={{ textAlign: 'left', marginBottom: '2rem' }}>
+              <span className="section-tag">Editor Support</span>
+              <h2>VS Code Extension</h2>
+              <p>Get syntax highlighting, code snippets, and diagnostics for Ezra in VS Code.</p>
+            </div>
+            <a
+              href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-lang-1.0.0.vsix"
+              className="download-btn-main"
+              style={{ width: 'fit-content', marginBottom: '1.5rem' }}
+            >
+              ⬇ Download ezra-lang-1.0.0.vsix
             </a>
+            <p style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-heading)' }}>
+              Install the extension:
+            </p>
+            <InlineCmd cmd="code --install-extension ezra-lang-1.0.0.vsix" />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+              Or open VS Code → Extensions → "…" menu → Install from VSIX → select the downloaded file.
+            </p>
           </div>
         </div>
       </section>
@@ -154,33 +150,54 @@ export default function DownloadPage() {
       {/* After Install */}
       <section className="section">
         <div className="container">
-          <div className="section-header">
-            <h2>After <span className="text-gradient">Install</span></h2>
-            <p>Open a new terminal and verify:</p>
-          </div>
-          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <CmdBlock cmd="ezra --version" id="ver" />
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '1.5rem' }}>Expected: <code>ezra 1.0.0</code></p>
-            <CmdBlock cmd="ezra new my_app" id="new" />
-            <CmdBlock cmd="cd my_app" id="cd" />
-            <CmdBlock cmd="ezra run" id="run" />
-            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <Link href="/docs" className="btn btn-primary">Read the Docs →</Link>
+          <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <div className="section-heading" style={{ textAlign: 'left', marginBottom: '2rem' }}>
+              <span className="section-tag">Verify Installation</span>
+              <h2>After installing</h2>
+              <p>Run these commands to verify Ezra is correctly installed.</p>
+            </div>
+            <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-heading)' }}>
+              Check version
+            </p>
+            <InlineCmd cmd="ezra --version" />
+            <p style={{ fontWeight: 600, margin: '1.25rem 0 0.5rem', color: 'var(--text-heading)' }}>
+              Run a file
+            </p>
+            <InlineCmd cmd='ezra hello.ez' />
+            <p style={{ fontWeight: 600, margin: '1.25rem 0 0.5rem', color: 'var(--text-heading)' }}>
+              Open the REPL
+            </p>
+            <InlineCmd cmd="ezra" />
+            <div style={{ background: 'var(--brand-light)', border: '1px solid var(--brand-border)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', marginTop: '1.5rem' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--brand)' }}>
+                <strong>New to Ezra?</strong> Read the{' '}
+                <Link href="/docs">Getting Started guide</Link> or try the{' '}
+                <Link href="/playground">online playground</Link>.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Build from Source */}
-      <section className="section" style={{ background: 'var(--bg-2)', paddingTop: '2rem', paddingBottom: '4rem' }}>
+      {/* Build from source */}
+      <section className="section section-alt">
         <div className="container">
-          <div className="section-header"><h2>Build from <span className="text-gradient">Source</span></h2></div>
-          <div className="card" style={{ maxWidth: '640px', margin: '0 auto' }}>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Requires <a href="https://rustup.rs" target="_blank" rel="noopener noreferrer">Rust stable</a>:</p>
-            <CmdBlock cmd="git clone https://github.com/ranaji114/Ezra-programming-lang" id="clone" />
-            <CmdBlock cmd="cd Ezra-programming-lang" id="cdir" />
-            <CmdBlock cmd="cargo build --release" id="build" />
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.75rem' }}>Binary: <code>target/release/ezra</code></p>
+          <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <div className="section-heading" style={{ textAlign: 'left', marginBottom: '2rem' }}>
+              <span className="section-tag">Developers</span>
+              <h2>Build from source</h2>
+              <p>Requires Rust 1.70+ and Cargo. Clone the repository and build with Cargo.</p>
+            </div>
+            <InlineCmd cmd="git clone https://github.com/ranaji114/Ezra-programming-lang.git" />
+            <div style={{ marginTop: '0.75rem' }}>
+              <InlineCmd cmd="cd Ezra-programming-lang && cargo build --release" />
+            </div>
+            <div style={{ marginTop: '0.75rem' }}>
+              <InlineCmd cmd="cargo test" />
+            </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
+              The built binary will be at <code>target/release/ezra</code> (or <code>ezra.exe</code> on Windows).
+            </p>
           </div>
         </div>
       </section>

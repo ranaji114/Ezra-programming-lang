@@ -1,374 +1,202 @@
 ﻿'use client';
-
+import { useState } from 'react';
 import Link from 'next/link';
 
-export default function DocsPage() {
-  const docSections = [
-    {
-      title: 'Getting Started',
-      description: 'New to Ezra? Start here to learn the basics.',
-      links: [
-        { path: '/docs/tutorial', label: 'Tutorial' },
-        { path: '/docs/installation', label: 'Installation Guide' },
-        { path: '/docs/first-program', label: 'Your First Program' },
-      ],
-    },
-    {
-      title: 'Language Reference',
-      description: 'Complete documentation of Ezra\'s syntax and features.',
-      links: [
-        { path: '/docs/language-reference', label: 'Syntax Overview' },
-        { path: '/docs/variables', label: 'Variables & Types' },
-        { path: '/docs/functions', label: 'Functions' },
-        { path: '/docs/control-flow', label: 'Control Flow' },
-        { path: '/docs/error-handling', label: 'Error Handling' },
-        { path: '/docs/modules', label: 'Modules' },
-      ],
-    },
-    {
-      title: 'Standard Library',
-      description: 'Built-in functions and modules.',
-      links: [
-        { path: '/docs/stdlib', label: 'Standard Library Overview' },
-        { path: '/docs/stdlib/io', label: 'I/O Operations' },
-        { path: '/docs/stdlib/math', label: 'Math Functions' },
-        { path: '/docs/stdlib/collections', label: 'Collections' },
-        { path: '/docs/stdlib/json', label: 'JSON Support' },
-        { path: '/docs/stdlib/fs', label: 'File System' },
-      ],
-    },
-    {
-      title: 'Tools & CLI',
-      description: 'Command line tools and development utilities.',
-      links: [
-        { path: '/docs/cli-reference', label: 'CLI Reference' },
-        { path: '/docs/editor-setup', label: 'Editor Setup' },
-        { path: '/docs/formatter', label: 'Code Formatter' },
-        { path: '/docs/linter', label: 'Linter' },
-        { path: '/docs/testing', label: 'Testing' },
-      ],
-    },
-    {
-      title: 'Advanced Topics',
-      description: 'For experienced users.',
-      links: [
-        { path: '/docs/metaprogramming', label: 'Metaprogramming' },
-        { path: '/docs/performance', label: 'Performance Tips' },
-        { path: '/docs/ffi', label: 'Foreign Function Interface' },
-        { path: '/docs/embed', label: 'Embedding Ezra' },
-      ],
-    },
-  ];
+const DOC_SECTIONS = [
+  {
+    title: 'Getting Started',
+    desc: 'Install Ezra, write your first program, and understand the basic project layout.',
+    icon: '🚀',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/getting-started.md',
+    badge: 'Start here',
+  },
+  {
+    title: 'Language Reference',
+    desc: 'Complete reference for variables, types, operators, control flow, functions, and more.',
+    icon: '📗',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/language-reference.md',
+  },
+  {
+    title: 'Standard Library',
+    desc: 'Full API docs for the Ezra standard library — math, I/O, collections, strings, JSON.',
+    icon: '📦',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/stdlib/index.md',
+  },
+  {
+    title: 'CLI Reference',
+    desc: 'All CLI commands: run, repl, format, lint, test, and their flags.',
+    icon: '🖥️',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/cli-reference.md',
+  },
+  {
+    title: 'Syntax Guide',
+    desc: 'Detailed walkthrough of Ezra syntax: basics, control flow, functions, and advanced patterns.',
+    icon: '📖',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/syntax/basics.md',
+  },
+  {
+    title: 'Tutorials',
+    desc: 'Step-by-step tutorials building real programs with Ezra.',
+    icon: '🎓',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/tutorial.md',
+  },
+  {
+    title: 'Tooling & Editor Support',
+    desc: 'VS Code extension, Vim plugin, formatter, linter, and REPL usage.',
+    icon: '🔧',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/tooling.md',
+  },
+  {
+    title: 'Examples',
+    desc: 'Practical code examples covering common patterns and use cases.',
+    icon: '💡',
+    href: '/examples',
+    internal: true,
+  },
+  {
+    title: 'Contributing',
+    desc: 'How to contribute to the Ezra language, tooling, docs, or the website.',
+    icon: '🤝',
+    href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/contributing.md',
+  },
+];
 
-  const popularGuides = [
-    {
-      title: 'Ezra for Python Developers',
-      path: '/docs/python-to-ezra',
-      description: 'Learn Ezra if you know Python',
-    },
-    {
-      title: 'Ezra for JavaScript Developers',
-      path: '/docs/javascript-to-ezra',
-      description: 'Learn Ezra if you know JavaScript',
-    },
-    {
-      title: 'Best Practices',
-      path: '/docs/best-practices',
-      description: 'Write idiomatic Ezra code',
-    },
-    {
-      title: 'Debugging',
-      path: '/docs/debugging',
-      description: 'Debug your Ezra applications',
-    },
-  ];
+const QUICK_LINKS = [
+  { label: 'Variables', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/syntax/basics.md' },
+  { label: 'Functions', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/syntax/functions.md' },
+  { label: 'Control Flow', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/syntax/control-flow.md' },
+  { label: 'Collections', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/stdlib/collections.md' },
+  { label: 'Math', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/stdlib/math.md' },
+  { label: 'I/O', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/stdlib/io.md' },
+  { label: 'Advanced', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/syntax/advanced.md' },
+  { label: 'Release Notes', href: 'https://github.com/ranaji114/Ezra-programming-lang/blob/main/docs/release.md' },
+];
+
+export default function DocsPage() {
+  const [query, setQuery] = useState('');
+
+  const filtered = DOC_SECTIONS.filter(
+    s =>
+      s.title.toLowerCase().includes(query.toLowerCase()) ||
+      s.desc.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <>
-      <section className="section">
+      {/* Hero */}
+      <section className="page-hero">
         <div className="container">
-          <div className="section-header">
-            <h1>Ezra Documentation</h1>
-            <p>
-              Comprehensive guides and references to help you learn and master
-              Ezra
-            </p>
-          </div>
-
-          {/* Search Section */}
-          <div className="search-section">
-            <div className="search-container">
-              <input
-                type="text"
-                placeholder="Search documentation..."
-                className="search-input"
-              />
-              <button className="btn btn-primary">Search</button>
-            </div>
-            <p className="search-tip">
-              Tip: Use the search bar above or browse categories below
-            </p>
+          <p className="page-hero-tag">Documentation</p>
+          <h1>Ezra Documentation</h1>
+          <p>Everything you need to write, run, and understand Ezra programs.</p>
+          <div style={{ marginTop: '1.5rem' }}>
+            <input
+              type="search"
+              className="docs-search"
+              placeholder="Search docs..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              aria-label="Search documentation"
+            />
           </div>
         </div>
       </section>
 
-      {/* Documentation Sections */}
-      <section className="section section-alt">
+      {/* Quick links */}
+      <div style={{ background: 'var(--bg-white)', borderBottom: '1px solid var(--border)', padding: '0.875rem 0' }}>
         <div className="container">
-          <h2>Documentation by Category</h2>
-
-          <div className="docs-grid">
-            {docSections.map((section, index) => (
-              <div key={index} className="card docs-card">
-                <h3>{section.title}</h3>
-                <p>{section.description}</p>
-                <ul className="docs-links">
-                  {section.links.map((link, linkIndex) => (
-                    <li key={linkIndex}>
-                      <Link href={link.path}>{link.label}</Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', marginRight: '0.25rem' }}>Quick:</span>
+            {QUICK_LINKS.map(l => (
+              <a
+                key={l.label}
+                href={l.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: '0.8125rem',
+                  color: 'var(--brand)',
+                  background: 'var(--brand-light)',
+                  padding: '0.2em 0.625em',
+                  borderRadius: '99px',
+                  border: '1px solid var(--brand-border)',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                }}
+              >
+                {l.label}
+              </a>
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Popular Guides */}
+      {/* Doc cards */}
       <section className="section">
         <div className="container">
-          <div className="section-header">
-            <h2>Popular Guides</h2>
-            <p>Hand-picked guides to help you get the most out of Ezra</p>
-          </div>
-
-          <div className="guides-grid">
-            {popularGuides.map((guide, index) => (
-              <div key={index} className="card guide-card">
-                <h3>
-                  <Link href={guide.path}>{guide.title}</Link>
-                </h3>
-                <p>{guide.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Reference */}
-      <section className="section section-alt">
-        <div className="container">
-          <div className="section-header">
-            <h2>Quick Reference</h2>
-            <p>Commonly used syntax and patterns</p>
-          </div>
-
-          <div className="quick-ref-grid">
-            <div className="card">
-              <h3>Variables</h3>
-              <pre>
-                <code>
-{`name is "John"`}
-{`age is 25`}
-{`is_active is true`}
-                </code>
-              </pre>
-            </div>
-            <div className="card">
-              <h3>Functions</h3>
-              <pre>
-                <code>
-{`give greet(name)`}
-{`  say "Hello {name}!"`}
-{`greet("World")`}
-                </code>
-              </pre>
-            </div>
-            <div className="card">
-              <h3>Conditionals</h3>
-              <pre>
-                <code>
-{`check if age >= 18`}
-{`  say "Adult"`}
-{`otherwise if age >= 13`}
-{`  say "Teen"`}
-{`otherwise`}
-{`  say "Child"`}
-                </code>
-              </pre>
-            </div>
-            <div className="card">
-              <h3>Loops</h3>
-              <pre>
-                <code>
-{`for i in 1..10`}
-{`  say i`}
-{`for item in [1, 2, 3]`}
-{`  say item * 2`}
-                </code>
-              </pre>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contribute */}
-      <section className="section">
-        <div className="container">
-          <div className="contribute-card">
-            <h2>Help Improve the Documentation</h2>
-            <p>
-              Found a mistake? Want to add something? The Ezra documentation is
-              open source on GitHub.
+          {filtered.length === 0 ? (
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+              No results for &quot;{query}&quot;. Try a different search term.
             </p>
-            <div className="contribute-actions">
-              <a
-                href="https://github.com/ranaji114/Ezra-programming-lang/tree/main/docs"
-                className="btn btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Edit on GitHub
-              </a>
-              <a
-                href="https://github.com/ranaji114/Ezra-programming-lang/issues"
-                className="btn btn-outline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Report an Issue
-              </a>
+          ) : (
+            <div className="docs-grid">
+              {filtered.map(s => (
+                <a
+                  key={s.title}
+                  href={s.href}
+                  target={s.internal ? undefined : '_blank'}
+                  rel={s.internal ? undefined : 'noopener noreferrer'}
+                  className="card"
+                  style={{ textDecoration: 'none', display: 'block' }}
+                >
+                  <span className="card-icon">{s.icon}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <span className="card-title" style={{ margin: 0 }}>{s.title}</span>
+                    {s.badge && (
+                      <span style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        background: 'var(--green-light)',
+                        color: 'var(--green)',
+                        padding: '0.1em 0.5em',
+                        borderRadius: '99px',
+                        border: '1px solid #bbf7d0',
+                      }}>
+                        {s.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="card-desc">{s.desc}</p>
+                  <span style={{ display: 'inline-block', marginTop: '0.875rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--brand)' }}>
+                    Read →
+                  </span>
+                </a>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </section>
 
-      <style jsx>{`
-        .search-section {
-          margin: 2rem 0;
-        }
-
-        .search-container {
-          display: flex;
-          gap: 1rem;
-          max-width: 500px;
-          margin: 0 auto;
-        }
-
-        .search-input {
-          flex: 1;
-          padding: 0.75rem 1rem;
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-md);
-          font-size: 1rem;
-        }
-
-        .search-tip {
-          text-align: center;
-          color: var(--color-text-muted);
-          font-size: 0.875rem;
-          margin-top: 0.5rem;
-        }
-
-        .docs-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .docs-card h3 {
-          margin-bottom: 0.5rem;
-        }
-
-        .docs-card p {
-          color: var(--color-text-secondary);
-          margin-bottom: 1rem;
-        }
-
-        .docs-links {
-          list-style: none;
-        }
-
-        .docs-links li {
-          margin-bottom: 0.5rem;
-        }
-
-        .docs-links a {
-          color: var(--color-primary);
-        }
-
-        .guides-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1rem;
-        }
-
-        .guide-card h3 {
-          margin-bottom: 0.5rem;
-        }
-
-        .guide-card h3 a {
-          color: var(--color-text);
-        }
-
-        .guide-card p {
-          color: var(--color-text-secondary);
-          font-size: 0.9rem;
-        }
-
-        .quick-ref-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1rem;
-        }
-
-        .quick-ref-grid h3 {
-          margin-bottom: 1rem;
-        }
-
-        .contribute-card {
-          text-align: center;
-          padding: 2rem;
-          background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg) 100%);
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--color-border);
-        }
-
-        .contribute-card h2 {
-          margin-bottom: 1rem;
-        }
-
-        .contribute-card p {
-          color: var(--color-text-secondary);
-          max-width: 600px;
-          margin: 0 auto 1.5rem;
-        }
-
-        .contribute-actions {
-          display: flex;
-          gap: 1rem;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        @media (max-width: 768px) {
-          .search-container {
-            flex-direction: column;
-          }
-
-          .docs-grid,
-          .guides-grid,
-          .quick-ref-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .contribute-actions {
-            flex-direction: column;
-            align-items: center;
-          }
-        }
-      `}</style>
+      {/* Bottom CTA */}
+      <section className="section section-alt">
+        <div className="container" style={{ textAlign: 'center' }}>
+          <h2 style={{ marginBottom: '0.75rem' }}>Can&apos;t find something?</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.75rem' }}>
+            Open an issue on GitHub and we&apos;ll help out.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a
+              href="https://github.com/ranaji114/Ezra-programming-lang/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary"
+            >
+              Open an Issue
+            </a>
+            <Link href="/playground" className="btn btn-secondary">Try the Playground</Link>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

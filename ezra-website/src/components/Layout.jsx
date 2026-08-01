@@ -1,45 +1,32 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
 export default function Layout({ children }) {
-  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollToTop(window.scrollY > 300);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  };
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
     <>
       <Navbar />
       <main>{children}</main>
       <Footer />
-
-      {showScrollToTop && (
-        <button className="scroll-to-top visible" onClick={scrollToTop}>
-          &uarr;
-        </button>
-      )}
-
-      <style jsx>{`
-        main {
-          min-height: calc(100vh - 100px);
-        }
-      `}</style>
+      <button
+        className={`scroll-top${showScrollTop ? ' visible' : ''}`}
+        onClick={scrollToTop}
+        aria-label="Scroll to top"
+        title="Scroll to top"
+      >
+        ↑
+      </button>
     </>
   );
 }

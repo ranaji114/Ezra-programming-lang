@@ -1,226 +1,257 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 
-const BASE = 'https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0';
+const HERO_CODE = `<span class="tok-keyword">give</span> <span class="tok-func">greet</span>(name)
+  <span class="tok-op">-></span> <span class="tok-string">"Hello {name}!"</span>
 
-const TABS = ['Hello World', 'Functions', 'Lists', 'Error Handling'];
+<span class="tok-var">nums</span> <span class="tok-keyword">is</span> <span class="tok-punct">[</span><span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>, <span class="tok-number">4</span>, <span class="tok-number">5</span><span class="tok-punct">]</span>
+<span class="tok-var">evens</span> <span class="tok-keyword">is</span> nums<span class="tok-punct">.</span><span class="tok-builtin">filter</span>(n <span class="tok-op">-></span> n <span class="tok-op">%</span> <span class="tok-number">2</span> <span class="tok-keyword">is</span> <span class="tok-number">0</span>)
+<span class="tok-builtin">say</span> evens   <span class="tok-comment"># [2, 4]</span>`;
 
-const CODE = {
-  'Hello World': [
-    ['cm','# Your first Ezra program'],
-    ['var','name'], ['op',' is '], ['bi','input'], ['str','"Your name: "'],
-    ['bi','say'], ['str','"Hello {name}!"'],
-  ],
-  'Functions': [
-    ['kw','give '], ['fn','add'], ['punc','('], ['var','a'], ['punc',', '], ['var','b'], ['punc',')'],
-    ['op','  -> '], ['var','a'], ['op',' + '], ['var','b'],
-    ['var','result'], ['op',' is '], ['fn','add'], ['punc','('], ['num','3'], ['punc',', '], ['num','4'], ['punc',')'],
-    ['bi','say'], ['var',' result'], ['cm','   # 7'],
-  ],
-  'Lists': [
-    ['var','nums'], ['op',' is '], ['punc','['], ['num','1,2,3,4,5'], ['punc',']'],
-    ['var','evens'], ['op',' is '], ['var','nums'], ['punc','.'], ['fn','filter'], ['punc','('], ['var','n'], ['op',' -> '], ['var','n'], ['op',' % '], ['num','2'], ['op',' is '], ['num','0'], ['punc',')'],
-    ['bi','say'], ['var',' evens'], ['cm','   # [2, 4]'],
-    ['var','total'], ['op',' is '], ['var','nums'], ['punc','.'], ['fn','sum'], ['punc','()'],
-    ['bi','say'], ['var',' total'], ['cm','   # 15'],
-  ],
-  'Error Handling': [
-    ['kw','try'],
-    ['op','  result '], ['op','is '], ['num','10'], ['op',' / '], ['num','0'],
-    ['kw','catch '], ['var','err'],
-    ['bi','  say'], ['str','"Caught: {err}"'],
-    ['kw','finally'],
-    ['bi','  say'], ['str','"Always runs"'],
-  ],
-};
+const CODE_EXAMPLES = {
+  'Hello World': `<span class="tok-builtin">say</span> <span class="tok-string">"Hello, World!"</span>`,
+  'Functions': `<span class="tok-keyword">give</span> <span class="tok-func">add</span>(a, b)
+  <span class="tok-op">-></span> a <span class="tok-op">+</span> b
 
-const RAW_CODE = {
-  'Hello World': `name is input "Your name: "\nsay "Hello {name}!"`,
-  'Functions': `give add(a, b)\n  -> a + b\nsay add(3, 4)   # 7`,
-  'Lists': `nums is [1,2,3,4,5]\nevens is nums.filter(n -> n % 2 is 0)\nsay evens   # [2, 4]`,
-  'Error Handling': `try\n  result is 10 / 0\ncatch err\n  say "Caught: {err}"\nfinally\n  say "Always runs"`,
+<span class="tok-keyword">give</span> <span class="tok-func">greet</span>(name)
+  <span class="tok-op">-></span> <span class="tok-string">"Hello, {name}!"</span>
+
+<span class="tok-builtin">say</span> <span class="tok-func">add</span>(<span class="tok-number">3</span>, <span class="tok-number">4</span>)       <span class="tok-comment"># 7</span>
+<span class="tok-builtin">say</span> <span class="tok-func">greet</span>(<span class="tok-string">"Ankur"</span>)  <span class="tok-comment"># Hello, Ankur!</span>`,
+  'Lists': `<span class="tok-var">nums</span> <span class="tok-keyword">is</span> [<span class="tok-number">1</span>, <span class="tok-number">2</span>, <span class="tok-number">3</span>, <span class="tok-number">4</span>, <span class="tok-number">5</span>]
+<span class="tok-var">evens</span> <span class="tok-keyword">is</span> nums.<span class="tok-builtin">filter</span>(n <span class="tok-op">-></span> n <span class="tok-op">%</span> <span class="tok-number">2</span> <span class="tok-keyword">is</span> <span class="tok-number">0</span>)
+<span class="tok-var">doubled</span> <span class="tok-keyword">is</span> nums.<span class="tok-builtin">map</span>(n <span class="tok-op">-></span> n <span class="tok-op">*</span> <span class="tok-number">2</span>)
+<span class="tok-builtin">say</span> evens    <span class="tok-comment"># [2, 4]</span>
+<span class="tok-builtin">say</span> doubled  <span class="tok-comment"># [2, 4, 6, 8, 10]</span>`,
+  'Error Handling': `<span class="tok-keyword">attempt</span>
+  <span class="tok-var">result</span> <span class="tok-keyword">is</span> <span class="tok-builtin">int</span>(<span class="tok-string">"abc"</span>)
+  <span class="tok-builtin">say</span> result
+<span class="tok-keyword">rescue</span> err
+  <span class="tok-builtin">say</span> <span class="tok-string">"Caught: {err}"</span>`,
 };
 
 const FEATURES = [
-  { icon: '📖', title: 'Readable Syntax', desc: 'Natural English-like keywords. Write code the way you think, not the way a compiler wants.' },
-  { icon: '⚡', title: 'Rust Performance', desc: 'Built on Rust for blazing speed, memory safety, and zero-overhead execution.' },
-  { icon: '🌍', title: 'Cross-Platform', desc: 'Single binary for Windows, Linux, and macOS. Install in one command.' },
-  { icon: '🔧', title: 'Full Tooling', desc: 'Formatter, linter, test runner, and REPL — all built into one CLI.' },
-  { icon: '🔌', title: 'VS Code + Vim', desc: 'Syntax highlighting, LSP support, 30+ snippets, and the Ezra Neon theme.' },
-  { icon: '📦', title: 'Rich Stdlib', desc: 'JSON, file I/O, math, collections — batteries included from day one.' },
+  { icon: '📖', title: 'Readable Syntax', desc: 'Write code that reads like plain English. No braces, no semicolons — just clean, minimal syntax.' },
+  { icon: '⚡', title: 'Rust Performance', desc: 'Built on a Rust runtime. Fast startup, low memory, deterministic execution.' },
+  { icon: '🌐', title: 'Cross-Platform', desc: 'One codebase runs on Windows, Linux, and macOS with native binaries for each.' },
+  { icon: '🔧', title: 'Built-in Tooling', desc: 'Comes with a formatter, linter, test runner, and REPL out of the box.' },
+  { icon: '💻', title: 'VS Code Support', desc: 'First-class VS Code extension with syntax highlighting, snippets, and diagnostics.' },
+  { icon: '📦', title: 'Standard Library', desc: 'Rich standard library covering I/O, math, collections, strings, JSON, and more.' },
 ];
 
-export default function HomePage() {
-  const [tab, setTab] = useState('Hello World');
+function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
-  const [stars, setStars] = useState(null);
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/ranaji114/Ezra-programming-lang', { headers: { 'User-Agent': 'ezra-site' } })
-      .then(r => r.json()).then(d => setStars(d.stargazers_count)).catch(() => {});
-  }, []);
-
-  const copy = () => {
-    navigator.clipboard.writeText(RAW_CODE[tab]).then(() => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
+  return (
+    <button className={`copy-btn${copied ? ' copied' : ''}`} onClick={handleCopy}>
+      {copied ? '✓ Copied' : 'Copy'}
+    </button>
+  );
+}
+
+export default function HomePage() {
+  const [activeTab, setActiveTab] = useState('Hello World');
 
   return (
     <>
-      {/* HERO */}
+      {/* ── Hero ── */}
       <section className="hero">
-        <div className="hero-orb hero-orb-1" />
-        <div className="hero-orb hero-orb-2" />
-        <div className="hero-grid">
-          <div className="hero-content">
-            <div className="hero-badge">🚀 Ezra v1.0.0 — by Ankur Rana</div>
-            <h1>Write code<br /><span className="text-gradient">the way you think</span></h1>
-            <p>A readable, indentation-based scripting language built in Rust. Clean syntax, powerful standard library, first-class IDE support.</p>
-            <div className="hero-actions">
-              <a href={`${BASE}/EzraSetup-1.0.0.exe`} className="btn btn-accent btn-lg" download>
-                ⬇ Download for Windows
-              </a>
-              <a href="https://github.com/ranaji114/Ezra-programming-lang" target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-lg">
-                {stars !== null ? `★ ${stars}` : '★'} GitHub
-              </a>
-            </div>
-            <div className="hero-code">
-              <div><span className="kw">give</span> <span className="fn">greet</span><span className="punc">(</span><span className="var">name</span><span className="punc">)</span></div>
-              <div>&nbsp;&nbsp;<span className="op">-&gt;</span> <span className="str">"Hello {'{'}name{'}'} from Ezra!"</span></div>
-              <div>&nbsp;</div>
-              <div><span className="bi">say</span> <span className="fn">greet</span><span className="punc">(</span><span className="str">"Ankur"</span><span className="punc">)</span>&nbsp;<span className="cm"># Hello Ankur from Ezra!</span></div>
-            </div>
-          </div>
-          <div className="hero-visual">
-            <div className="hero-window" style={{ animationName: 'float', animationDuration: '4s', animationIterationCount: 'infinite', animationTimingFunction: 'ease-in-out' }}>
-              <div className="hero-window-bar">
-                <div className="win-dot win-dot-r" /><div className="win-dot win-dot-y" /><div className="win-dot win-dot-g" />
-                <span className="win-filename">main.ez</span>
+        <div className="container">
+          <div className="hero-grid">
+            <div>
+              <div className="hero-badge">
+                <span>●</span> v1.0.0 Released
               </div>
-              <div className="hero-window-body">
-                <div><span className="cm"># Ezra — github.com/ranaji114/Ezra-programming-lang</span></div>
-                <div>&nbsp;</div>
-                <div><span className="var">nums</span> <span className="op">is</span> <span className="punc">[</span><span className="num">1</span><span className="punc">,</span> <span className="num">2</span><span className="punc">,</span> <span className="num">3</span><span className="punc">,</span> <span className="num">4</span><span className="punc">,</span> <span className="num">5</span><span className="punc">]</span></div>
-                <div><span className="var">evens</span> <span className="op">is</span> <span className="var">nums</span><span className="punc">.</span><span className="fn">filter</span><span className="punc">(</span><span className="var">n</span> <span className="op">-&gt;</span> <span className="var">n</span> <span className="op">%</span> <span className="num">2</span> <span className="op">is</span> <span className="num">0</span><span className="punc">)</span></div>
-                <div><span className="bi">say</span> <span className="var">evens</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="cm"># [2, 4]</span></div>
-                <div>&nbsp;</div>
-                <div><span className="kw">try</span></div>
-                <div>&nbsp;&nbsp;<span className="var">x</span> <span className="op">is</span> <span className="num">10</span> <span className="op">/</span> <span className="num">0</span></div>
-                <div><span className="kw">catch</span> <span className="var">err</span></div>
-                <div>&nbsp;&nbsp;<span className="bi">say</span> <span className="str">"Caught: {'{'}err{'}'}"</span></div>
+              <h1 className="hero-title">
+                Ezra — A Readable<br />Scripting Language
+              </h1>
+              <p className="hero-subtitle">
+                Write code that reads like plain English. Ezra is a clean, expressive scripting
+                language built on a fast Rust runtime — great for automation, learning, and everyday scripting.
+              </p>
+              <div className="hero-actions">
+                <a
+                  href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/EzraSetup-1.0.0.exe"
+                  className="btn btn-primary btn-lg"
+                >
+                  ⬇ Download for Windows
+                </a>
+                <Link href="/docs" className="btn btn-secondary btn-lg">
+                  View Docs →
+                </Link>
+              </div>
+            </div>
+            <div>
+              <div className="code-block">
+                <div className="code-block-header">
+                  <div className="code-dots">
+                    <span className="code-dot code-dot-red" />
+                    <span className="code-dot code-dot-yellow" />
+                    <span className="code-dot code-dot-green" />
+                  </div>
+                  <span className="code-block-title">example.ez</span>
+                  <span />
+                </div>
+                <div className="code-block-body">
+                  <pre dangerouslySetInnerHTML={{ __html: HERO_CODE }} />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* STATS */}
-      <div className="stats-bar">
-        <div className="stats-inner">
-          {[['⚙️','Built with','Rust'],['✅','Tests','55 / 55'],['📦','Version','v1.0.0'],['📄','License','MIT'],['🖥','Platforms','Win · Linux · macOS']].map(([icon,label,val],i) => (
-            <span key={i} className="stat-item">
-              {i > 0 && <span className="stat-sep" />}
-              {icon} <span>{label}:</span> <strong>{val}</strong>
-            </span>
-          ))}
+      {/* ── Install Banner ── */}
+      <div className="install-banner">
+        <div className="container">
+          <div className="install-banner-inner">
+            <span className="install-banner-label">Install Ezra:</span>
+            <div className="install-banner-links">
+              <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/EzraSetup-1.0.0.exe" className="install-banner-link">
+                ⬇ Windows
+              </a>
+              <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-linux-x86_64-1.0.0.tar.gz" className="install-banner-link">
+                ⬇ Linux
+              </a>
+              <a href="https://github.com/ranaji114/Ezra-programming-lang/releases/download/v1.0.0/ezra-macos-aarch64-1.0.0.tar.gz" className="install-banner-link">
+                ⬇ macOS
+              </a>
+            </div>
+            <Link href="/download" style={{ color: 'white', fontSize: '0.875rem', marginLeft: 'auto', opacity: 0.85 }}>
+              All platforms →
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* FEATURES */}
-      <section className="section" style={{ background: 'var(--bg-2)' }}>
+      {/* ── Features ── */}
+      <section className="section section-alt">
         <div className="container">
-          <div className="section-header">
-            <h2>Why <span className="text-gradient">Ezra?</span></h2>
-            <p>Everything you need for modern scripting — in one binary.</p>
+          <div className="section-heading">
+            <span className="section-tag">Why Ezra</span>
+            <h2>Everything you need to be productive</h2>
+            <p>Designed to be simple enough to pick up in an afternoon, powerful enough for real-world use.</p>
           </div>
           <div className="features-grid">
-            {FEATURES.map((f, i) => (
-              <div key={i} className="card feature-card">
-                <div className="feature-icon">{f.icon}</div>
-                <h3>{f.title}</h3>
-                <p>{f.desc}</p>
+            {FEATURES.map(f => (
+              <div key={f.title} className="card">
+                <span className="card-icon">{f.icon}</span>
+                <div className="card-title">{f.title}</div>
+                <p className="card-desc">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CODE EXAMPLES */}
+      {/* ── Code Showcase ── */}
       <section className="section">
         <div className="container">
-          <div className="section-header">
-            <h2>Language at a <span className="text-gradient">Glance</span></h2>
-            <p>Clean, readable syntax that gets out of your way.</p>
+          <div className="section-heading">
+            <span className="section-tag">Code Examples</span>
+            <h2>Clean syntax, familiar ideas</h2>
+            <p>See how Ezra handles common programming patterns.</p>
           </div>
-          <div className="code-tabs">
-            {TABS.map(t => (
-              <button key={t} className={`code-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>{t}</button>
-            ))}
-          </div>
-          <div className="code-panel">
-            <button className={`copy-btn${copied ? ' copied' : ''}`} onClick={copy}>{copied ? '✓ Copied' : 'Copy'}</button>
-            <pre style={{ margin: 0 }}><code dangerouslySetInnerHTML={{ __html: RAW_CODE[tab]
-              .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-              .replace(/\b(give|check if|otherwise|repeat|for each|while|until|loop|try|catch|finally|throw|pick|when|return|break|next)\b/g,'<span class="kw">$1</span>')
-              .replace(/"([^"]*?)"/g,'<span class="str">"$1"</span>')
-              .replace(/\b(say|write|input|input_number|warn|fail|debug|len|range|type_of|parse_json|stringify_json|read_file|write_file)\b/g,'<span class="bi">$1</span>')
-              .replace(/\b([0-9]+(?:\.[0-9]+)?)\b/g,'<span class="num">$1</span>')
-              .replace(/(#[^\n]*)/g,'<span class="cm">$1</span>')
-              .replace(/(->|is|not|and|or|\+|-|\*|\/|%|>=|<=|==|!=|>|<)/g,'<span class="op">$1</span>')
-            }} /></pre>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-            <Link href="/examples" className="btn btn-outline">View all examples →</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* IDE SUPPORT */}
-      <section className="section" style={{ background: 'var(--bg-2)' }}>
-        <div className="container">
-          <div className="section-header">
-            <h2>First-Class <span className="text-gradient">IDE Support</span></h2>
-            <p>Write Ezra with full editor integration out of the box.</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1.5rem' }}>
-            <div className="card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⬛</div>
-              <h3>VS Code Extension</h3>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                Syntax highlighting, Ezra Neon theme, 30+ snippets, LSP diagnostics, hover docs, and Ctrl+R to run.
-              </p>
-              <a href={`${BASE}/ezra-lang-1.0.0.vsix`} className="btn btn-primary" download>
-                ⬇ Download VSIX
-              </a>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--bg-light)', padding: '0 1rem' }}>
+              <div className="tab-bar">
+                {Object.keys(CODE_EXAMPLES).map(tab => (
+                  <button
+                    key={tab}
+                    className={`tab-btn${activeTab === tab ? ' active' : ''}`}
+                    onClick={() => setActiveTab(tab)}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🟩</div>
-              <h3>Vim / Neovim</h3>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                Syntax highlighting, file-type detection, auto-indentation, and LSP setup via nvim-lspconfig.
-              </p>
-              <a href="https://github.com/ranaji114/Ezra-programming-lang/tree/main/editor-support/vim" target="_blank" rel="noopener noreferrer" className="btn btn-outline">
-                Setup Guide →
-              </a>
+            <div className="code-block" style={{ borderRadius: 0, border: 'none' }}>
+              <div className="code-block-header">
+                <div className="code-dots">
+                  <span className="code-dot code-dot-red" />
+                  <span className="code-dot code-dot-yellow" />
+                  <span className="code-dot code-dot-green" />
+                </div>
+                <span className="code-block-title">{activeTab.toLowerCase().replace(/ /g, '_')}.ez</span>
+                <CopyButton text={CODE_EXAMPLES[activeTab].replace(/<[^>]+>/g, '')} />
+              </div>
+              <div className="code-block-body">
+                <pre dangerouslySetInnerHTML={{ __html: CODE_EXAMPLES[activeTab] }} />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="section">
+      {/* ── Quick Start ── */}
+      <section className="section section-alt">
         <div className="container">
-          <div className="cta-banner">
-            <h2>Ready to try <span className="text-gradient">Ezra?</span></h2>
-            <p>Download the installer and write your first program in minutes. Free and open-source.</p>
-            <div className="cta-actions">
-              <a href={`${BASE}/EzraSetup-1.0.0.exe`} className="btn btn-accent btn-lg" download>⬇ Download for Windows</a>
-              <Link href="/download" className="btn btn-primary btn-lg">All Platforms</Link>
-              <a href="https://github.com/ranaji114/Ezra-programming-lang" target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-lg">View on GitHub</a>
+          <div className="section-heading">
+            <span className="section-tag">Get Started</span>
+            <h2>Up and running in minutes</h2>
+            <p>Three simple steps to write your first Ezra program.</p>
+          </div>
+          <div className="steps-grid">
+            <div className="step">
+              <div className="step-number">1</div>
+              <div className="step-title">Install Ezra</div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                Download for your platform and run the installer.
+              </p>
+              <div className="step-cmd"># Windows: run EzraSetup-1.0.0.exe<br /># Linux/macOS: sh install/install.sh</div>
             </div>
+            <div className="step">
+              <div className="step-number">2</div>
+              <div className="step-title">Create a file</div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                Create a <code>.ez</code> file and write your first program.
+              </p>
+              <div className="step-cmd">{'say "Hello, World!"'}</div>
+            </div>
+            <div className="step">
+              <div className="step-number">3</div>
+              <div className="step-title">Run it</div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                Execute with the <code>ezra</code> command.
+              </p>
+              <div className="step-cmd">ezra hello.ez</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+            <Link href="/docs" className="btn btn-primary">Read the Documentation →</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Author strip ── */}
+      <section className="section">
+        <div className="container" style={{ textAlign: 'center' }}>
+          <span className="section-tag">Open Source</span>
+          <h2 style={{ marginBottom: '0.75rem' }}>Created by Ankur Rana</h2>
+          <p style={{ fontSize: '1.0625rem', color: 'var(--text-muted)', maxWidth: '520px', margin: '0 auto 1.75rem' }}>
+            Ezra is a solo passion project — one developer building an entire language, runtime,
+            tooling, and documentation from scratch.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a
+              href="https://github.com/ranaji114/Ezra-programming-lang"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              View on GitHub
+            </a>
+            <Link href="/about" className="btn btn-ghost">Learn More About Ezra →</Link>
           </div>
         </div>
       </section>

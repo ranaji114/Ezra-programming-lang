@@ -1,474 +1,468 @@
 'use client';
+import { useState, useRef } from 'react';
 
-import { useState, useRef, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+const EXAMPLES = {
+  'Hello World': 'say "Hello, World!"',
+  'Variables': 'name is "Ankur"\nage is 25\nsay "Hello {name}, age {age}"',
+  'Conditions': 'age is 20\ncheck if age >= 18\n  say "Adult"\notherwise\n  say "Minor"',
+  'Functions': 'give add(a, b)\n  -> a + b\nsay add(3, 4)',
+  'Lists': 'nums is [1, 2, 3, 4, 5]\nevens is nums.filter(n -> n % 2 is 0)\nsay evens',
+  'FizzBuzz': 'for each i in range(1, 21)\n  check if i % 15 is 0\n    say "FizzBuzz"\n  otherwise if i % 3 is 0\n    say "Fizz"\n  otherwise if i % 5 is 0\n    say "Buzz"\n  otherwise\n    say i',
+};
 
-const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
+/* ── Simple Ezra interpreter ── */
+function evalExpr(expr, env) {
+  expr = expr.trim();
+  if (!expr) return '';
+
+  // String literal with interpolation
+  if ((expr.startsWith('"') && expr.endsWith('"')) ||
+      (expr.startsWith("'") && expr.endsWith("'"))) {
+    return expr.slice(1, -1).replace(/\{(\w+)\}/g, (_, k) => (k in env ? env[k] : k));
+  }
+
+  // Number
+  if (/^-?\d+(\.\d+)?$/.test(expr)) return parseFloat(expr);
+
+  // Boolean / null literals
+  if (expr === 'yes') return true;
+  if (expr === 'no') return false;
+  if (expr === 'nothing') return null;
+
+  // Array literal
+  if (expr.startsWith('[') && expr.endsWith(']')) {
+    const inner = expr.slice(1, -1).trim();
+    if (!inner) return [];
+    // simple split on commas not inside brackets
+    const items = [];
+    let depth = 0, cur = '';
+    for (const ch of inner) {
+      if (ch === '[' || ch === '(') depth++;
+      else if (ch === ']' || ch === ')') depth--;
+      if (ch === ',' && depth === 0) { items.push(evalExpr(cur.trim(), env)); cur = ''; }
+      else cur += ch;
+    }
+    if (cur.trim()) items.push(evalExpr(cur.trim(), env));
+    return items;
+  }
+
+  // Method call: expr.method(args)
+  const methodMatch = expr.match(/^(.+?)\.(filter|map|len|push|pop|join|slice|reverse)\((.*)?\)$/);
+  if (methodMatch) {
+    const obj = evalExpr(methodMatch[1], env);
+    const method = methodMatch[2];
+    const rawArg = (methodMatch[3] || '').trim();
+    if (method === 'len') return Array.isArray(obj) ? obj.length : String(obj).length;
+    if (Array.isArray(obj)) {
+      if (method === 'reverse') return [...obj].reverse();
+      if (method === 'join') {
+        const sep = rawArg ? evalExpr(rawArg, env) : ',';
+        return obj.join(sep);
+      }
+      if (method === 'filter' && rawArg.includes('->')) {
+        const [param, body] = rawArg.split('->').map(s => s.trim());
+        return obj.filter(v => {
+          const tmpEnv = { ...env, [param]: v };
+          return !!evalExpr(body, tmpEnv);
+        });
+      }
+      if (method === 'map' && rawArg.includes('->')) {
+        const [param, body] = rawArg.split('->').map(s => s.trim());
+        return obj.map(v => {
+          const tmpEnv = { ...env, [param]: v };
+          return evalExpr(body, tmpEnv);
+        });
+      }
+    }
+  }
+
+  // range(start, end)
+  const rangeMatch = expr.match(/^range\((\d+),\s*(\d+)\)$/);
+  if (rangeMatch) {
+    const start = parseInt(rangeMatch[1]);
+    const end = parseInt(rangeMatch[2]);
+    return Array.from({ length: end - start }, (_, i) => start + i);
+  }
+
+  // Variable lookup
+  if (/^[a-zA-Z_]\w*$/.test(expr) && expr in env) return env[expr];
+
+  // Simple arithmetic: handle + - * / % with left-to-right precedence
+  // We try addition/subtraction first (lowest), then mul/div/mod
+  // Scan right-to-left for + or - outside parens
+  let depth2 = 0;
+  for (let i = expr.length - 1; i >= 0; i--) {
+    const ch = expr[i];
+    if (ch === ')' || ch === ']') depth2++;
+    else if (ch === '(' || ch === '[') depth2--;
+    if (depth2 === 0 && (ch === '+' || ch === '-') && i > 0) {
+      const left = evalExpr(expr.slice(0, i), env);
+      const right = evalExpr(expr.slice(i + 1), env);
+      if (typeof left === 'number' && typeof right === 'number') {
+        return ch === '+' ? left + right : left - right;
+      }
+      if (ch === '+') return String(left) + String(right);
+      return left;
+    }
+  }
+
+  // * / %
+  depth2 = 0;
+  for (let i = expr.length - 1; i >= 0; i--) {
+    const ch = expr[i];
+    if (ch === ')' || ch === ']') depth2++;
+    else if (ch === '(' || ch === '[') depth2--;
+    if (depth2 === 0 && (ch === '*' || ch === '/' || ch === '%')) {
+      const left = evalExpr(expr.slice(0, i), env);
+      const right = evalExpr(expr.slice(i + 1), env);
+      if (typeof left === 'number' && typeof right === 'number') {
+        if (ch === '*') return left * right;
+        if (ch === '/') return right !== 0 ? left / right : 'error: division by zero';
+        if (ch === '%') return ((left % right) + right) % right;
+      }
+    }
+  }
+
+  // Comparison operators
+  const cmpMatch = expr.match(/^(.+?)\s*(>=|<=|!=|is not|is|>|<)\s*(.+)$/);
+  if (cmpMatch) {
+    const left = evalExpr(cmpMatch[1], env);
+    const right = evalExpr(cmpMatch[3], env);
+    switch (cmpMatch[2].trim()) {
+      case 'is': return left == right;  // eslint-disable-line eqeqeq
+      case 'is not': return left != right;  // eslint-disable-line eqeqeq
+      case '>': return left > right;
+      case '<': return left < right;
+      case '>=': return left >= right;
+      case '<=': return left <= right;
+      case '!=': return left !== right;
+    }
+  }
+
+  // Variable still in env (catch-all)
+  if (expr in env) return env[expr];
+  return expr;
+}
+
+function runEzra(code) {
+  const lines = code.split('\n');
+  const output = [];
+  const env = {};
+  const functions = {};
+
+  function displayVal(v) {
+    if (v === null) return 'nothing';
+    if (v === true) return 'yes';
+    if (v === false) return 'no';
+    if (Array.isArray(v)) return '[' + v.map(displayVal).join(', ') + ']';
+    return String(v);
+  }
+
+  let i = 0;
+  const MAX_ITER = 200;
+  let iterCount = 0;
+
+  function execBlock(lines, startIdx, baseEnv) {
+    // Execute an indented block starting at startIdx, returns [lastIdx, result]
+    const blockEnv = { ...baseEnv };
+    let idx = startIdx;
+    while (idx < lines.length) {
+      const raw = lines[idx];
+      if (raw.trim() === '' || raw.trim().startsWith('#')) { idx++; continue; }
+      // Stop if dedented
+      const indent = raw.match(/^(\s*)/)[1].length;
+      if (indent === 0 && startIdx > 0) break;
+      idx = execLine(lines, idx, blockEnv);
+    }
+    return idx;
+  }
+
+  function execLine(lines, idx, localEnv) {
+    iterCount++;
+    if (iterCount > MAX_ITER) throw new Error('Max iterations reached (infinite loop guard)');
+    const raw = lines[idx];
+    if (!raw || raw.trim() === '' || raw.trim().startsWith('#')) return idx + 1;
+    const line = raw.trim();
+
+    // say
+    if (line.startsWith('say ')) {
+      const expr = line.slice(4).trim();
+      output.push(displayVal(evalExpr(expr, localEnv)));
+      return idx + 1;
+    }
+
+    // give (function definition) — single line body only for simplicity
+    if (line.startsWith('give ')) {
+      const header = line.slice(5).trim();
+      const fnMatch = header.match(/^(\w+)\(([^)]*)\)$/);
+      if (fnMatch) {
+        const fnName = fnMatch[1];
+        const params = fnMatch[2].split(',').map(p => p.trim()).filter(Boolean);
+        // Collect body lines (indented)
+        const bodyLines = [];
+        let bi = idx + 1;
+        while (bi < lines.length && lines[bi].match(/^\s+/)) {
+          bodyLines.push(lines[bi].trim());
+          bi++;
+        }
+        functions[fnName] = { params, body: bodyLines };
+        localEnv[fnName] = (...args) => {
+          const fnEnv = { ...localEnv, ...functions };
+          params.forEach((p, pi) => { fnEnv[p] = args[pi]; });
+          let ret = undefined;
+          for (const bl of bodyLines) {
+            if (bl.startsWith('-> ')) { ret = evalExpr(bl.slice(3), fnEnv); break; }
+            else if (bl.startsWith('say ')) {
+              output.push(displayVal(evalExpr(bl.slice(4), fnEnv)));
+            } else if (/^[a-zA-Z_]\w*\s+is\s+/.test(bl)) {
+              const m = bl.match(/^([a-zA-Z_]\w*)\s+is\s+(.+)$/);
+              if (m) fnEnv[m[1]] = evalExpr(m[2], fnEnv);
+            }
+          }
+          return ret;
+        };
+        return bi;
+      }
+    }
+
+    // Assignment: name is value
+    const assignMatch = line.match(/^([a-zA-Z_]\w*)\s+is\s+(.+)$/);
+    if (assignMatch && !line.startsWith('check') && !line.startsWith('for') && !line.startsWith('otherwise')) {
+      const val = evalExpr(assignMatch[2], localEnv);
+      localEnv[assignMatch[1]] = val;
+      env[assignMatch[1]] = val;
+      return idx + 1;
+    }
+
+    // check if / otherwise
+    if (line.startsWith('check if ')) {
+      const cond = line.slice(9).trim();
+      const result = evalExpr(cond, localEnv);
+      // collect then-block
+      let bi = idx + 1;
+      const thenLines = [];
+      while (bi < lines.length && lines[bi].match(/^\s+/)) {
+        thenLines.push(lines[bi]);
+        bi++;
+      }
+      // look for otherwise
+      const elseLines = [];
+      if (bi < lines.length && lines[bi].trim().startsWith('otherwise')) {
+        bi++;
+        while (bi < lines.length && lines[bi].match(/^\s+/)) {
+          elseLines.push(lines[bi]);
+          bi++;
+        }
+      }
+      if (result) {
+        execBlock(thenLines, 0, localEnv);
+      } else if (elseLines.length) {
+        execBlock(elseLines, 0, localEnv);
+      }
+      return bi;
+    }
+
+    // for each i in range / list
+    const forMatch = line.match(/^for each (\w+) in (.+)$/);
+    if (forMatch) {
+      const varName = forMatch[1];
+      const iterableExpr = forMatch[2].trim();
+      const iterable = evalExpr(iterableExpr, localEnv);
+      // collect body
+      let bi = idx + 1;
+      const bodyRawLines = [];
+      const baseIndent = raw.match(/^(\s*)/)[1].length;
+      while (bi < lines.length) {
+        const bl = lines[bi];
+        if (!bl.trim()) { bi++; continue; }
+        const blIndent = bl.match(/^(\s*)/)[1].length;
+        if (blIndent <= baseIndent) break;
+        bodyRawLines.push(bl);
+        bi++;
+      }
+      if (Array.isArray(iterable)) {
+        for (const item of iterable) {
+          if (iterCount > MAX_ITER) break;
+          const loopEnv = { ...localEnv, [varName]: item };
+          execBlock(bodyRawLines, 0, loopEnv);
+          // propagate mutations
+          Object.assign(localEnv, loopEnv);
+        }
+      }
+      return bi;
+    }
+
+    // Function call: name(args)
+    const callMatch = line.match(/^([a-zA-Z_]\w*)\(([^)]*)\)$/);
+    if (callMatch && callMatch[1] in localEnv && typeof localEnv[callMatch[1]] === 'function') {
+      const args = callMatch[2].split(',').map(a => evalExpr(a.trim(), localEnv));
+      localEnv[callMatch[1]](...args);
+    }
+
+    return idx + 1;
+  }
+
+  try {
+    while (i < lines.length) {
+      i = execLine(lines, i, env);
+    }
+  } catch (e) {
+    output.push('error: ' + e.message);
+  }
+
+  return output.join('\n') || '(no output)';
+}
 
 export default function PlaygroundPage() {
-  const [code, setCode] = useState(`// Ezra Playground
-// Write your code here
-
-name is input "What is your name? "
-say "Hello, {name}!"
-
-// Try some examples:
-// - say "Hello, World!"
-// - for i in 1..5 { say i }
-// - nums is [1, 2, 3]
-//   say nums.filter(n -> n % 2 is 0)`);
+  const [code, setCode] = useState(EXAMPLES['Hello World']);
   const [output, setOutput] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [error, setError] = useState(null);
-  const [consoleMessages, setConsoleMessages] = useState([]);
+  const [hasRun, setHasRun] = useState(false);
+  const [selectedExample, setSelectedExample] = useState('Hello World');
+  const textareaRef = useRef(null);
 
-  const exampleCodes = {
-    hello: `say "Hello, World!"`,
-    variables: `name is "Ezra"
-age is 1
-version is "1.0.0"
-say "{name} v{version} is {age} year old"`,
-    function: `give add(a, b)
-  -> a + b
-
-say "3 + 4 = " + add(3, 4)`,
-    loop: `for i in 1..5
-  say "Number: {i}"`,
-    condition: `age is 25
-check if age >= 18
-  say "Adult"
-otherwise
-  say "Minor"`,
-    fizzbuzz: `for i in 1..20
-  check if i % 15 is 0
-    say "FizzBuzz"
-  otherwise if i % 3 is 0
-    say "Fizz"
-  otherwise if i % 5 is 0
-    say "Buzz"
-  otherwise
-    say i`,
-  };
-
-  const runCode = async () => {
-    setIsRunning(true);
-    setError(null);
-    setOutput('');
-    setConsoleMessages([]);
-
+  const handleRun = () => {
     try {
-      addToConsole('Running...', 'info');
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      addToConsole('Note: Online execution coming soon!', 'warning');
-      addToConsole('For now, please download Ezra to run code locally.', 'info');
-
-    } catch (err) {
-      setError(err.message);
-      addToConsole(`Error: ${err.message}`, 'error');
-    } finally {
-      setIsRunning(false);
+      const result = runEzra(code);
+      setOutput(result);
+    } catch (e) {
+      setOutput('error: ' + e.message);
     }
+    setHasRun(true);
   };
 
-  const addToConsole = (message, type = 'log') => {
-    const timestamp = new Date().toLocaleTimeString();
-    setConsoleMessages(prev => [...prev, { timestamp, message, type }]);
-  };
-
-  const clearConsole = () => {
-    setConsoleMessages([]);
+  const handleExampleChange = (e) => {
+    const name = e.target.value;
+    setSelectedExample(name);
+    setCode(EXAMPLES[name]);
     setOutput('');
-    setError(null);
+    setHasRun(false);
   };
 
-  const loadExample = (exampleKey) => {
-    setCode(exampleCodes[exampleKey]);
-    clearConsole();
-  };
-
-  const handleEditorChange = (newValue) => {
-    setCode(newValue);
+  const handleKeyDown = (e) => {
+    // Tab key inserts spaces
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = e.target.selectionStart;
+      const end = e.target.selectionEnd;
+      const newCode = code.slice(0, start) + '  ' + code.slice(end);
+      setCode(newCode);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 2;
+        }
+      }, 0);
+    }
+    // Ctrl+Enter runs
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleRun();
+    }
   };
 
   return (
     <>
+      {/* Hero */}
+      <section className="page-hero">
+        <div className="container">
+          <p className="page-hero-tag">Playground</p>
+          <h1>Ezra Playground</h1>
+          <p>Write and run Ezra code directly in your browser. No installation needed.</p>
+        </div>
+      </section>
+
       <section className="section">
         <div className="container">
-          <div className="section-header">
-            <h1>Ezra Online Playground</h1>
-            <p>
-              Write, run, and experiment with Ezra code directly in your browser.
-              No installation required!
-            </p>
+          {/* Toolbar */}
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <label htmlFor="example-select" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-heading)' }}>
+              Example:
+            </label>
+            <select
+              id="example-select"
+              className="playground-select"
+              value={selectedExample}
+              onChange={handleExampleChange}
+            >
+              {Object.keys(EXAMPLES).map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+            <button className="run-btn" onClick={handleRun}>
+              ▶ Run
+            </button>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+              Ctrl+Enter to run
+            </span>
           </div>
 
+          {/* Editor + Output */}
           <div className="playground-layout">
-            <div className="editor-container">
-              <div className="editor-header">
-                <div className="editor-tabs">
-                  <button className="editor-tab active">
-                    <span>code.ez</span>
-                  </button>
-                </div>
-                <div className="editor-actions">
-                  <div className="example-dropdown">
-                    <button className="btn btn-secondary">
-                      Examples ▼
-                    </button>
-                    <div className="example-menu">
-                      {Object.entries(exampleCodes).map(([key, value]) => (
-                        <button
-                          key={key}
-                          className="example-item"
-                          onClick={() => loadExample(key)}
-                        >
-                          {key.charAt(0).toUpperCase() + key.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    className="btn btn-outline"
-                    onClick={clearConsole}
-                    disabled={consoleMessages.length === 0}
-                  >
-                    Clear
-                  </button>
-                </div>
+            {/* Editor */}
+            <div className="playground-editor">
+              <div className="playground-header">
+                <span className="playground-header-title">editor.ez</span>
+                <span style={{ fontSize: '0.7rem', color: '#6e7681' }}>Ezra</span>
               </div>
-
-              <div className="editor-wrapper">
-                <Editor
-                  height="400px"
-                  defaultLanguage="javascript"
-                  value={code}
-                  onChange={handleEditorChange}
-                  theme="light"
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    wordWrap: 'on',
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    tabSize: 2,
-                    insertSpaces: true,
-                  }}
-                  beforeMount={(monaco) => {
-                    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-                      allowNonTsExtensions: true,
-                    });
-                  }}
-                />
-              </div>
-
-              <div className="run-button-container">
-                <button
-                  className="btn btn-primary btn-run"
-                  onClick={runCode}
-                  disabled={isRunning}
-                >
-                  {isRunning ? 'Running...' : 'Run Code (Ctrl+Enter)'}
-                </button>
-              </div>
+              <textarea
+                ref={textareaRef}
+                className="playground-textarea"
+                value={code}
+                onChange={e => { setCode(e.target.value); setHasRun(false); }}
+                onKeyDown={handleKeyDown}
+                spellCheck={false}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                aria-label="Ezra code editor"
+              />
             </div>
 
-            <div className="output-container">
-              <div className="output-header">
-                <span>Console</span>
-                <button
-                  className="clear-btn"
-                  onClick={clearConsole}
-                >
-                  Clear
-                </button>
-              </div>
-              <div className="output-content">
-                {consoleMessages.length === 0 ? (
-                  <div className="empty-state">
-                    <p>Run your code to see output here</p>
-                    <p className="muted">
-                      Or try one of the examples from the menu above
-                    </p>
-                  </div>
-                ) : (
-                  consoleMessages.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`console-line console-${msg.type}`}
-                    >
-                      <span className="timestamp">{msg.timestamp}</span>
-                      <span className="message">{msg.message}</span>
-                    </div>
-                  ))
+            {/* Output */}
+            <div className="playground-output">
+              <div className="playground-header">
+                <span className="playground-header-title">output</span>
+                {hasRun && (
+                  <span style={{ fontSize: '0.7rem', color: '#56d364' }}>● ran</span>
                 )}
               </div>
+              <div className="playground-output-body">
+                {hasRun ? (
+                  <span style={{ color: output.startsWith('error:') ? '#f85149' : '#e6edf3' }}>
+                    {output}
+                  </span>
+                ) : (
+                  <span style={{ color: '#6e7681', fontStyle: 'italic' }}>
+                    Press ▶ Run to see output
+                  </span>
+                )}
+              </div>
+              <div className="playground-note">
+                ⚠ Browser playground runs a simplified Ezra subset. Download Ezra for full language support.
+              </div>
             </div>
           </div>
 
-          {error && (
-            <div className="alert alert-error" style={{ marginTop: '1rem' }}>
-              {error}
+          {/* Help */}
+          <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+            <div style={{ background: 'var(--bg-light)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem' }}>
+              <p style={{ fontWeight: 700, color: 'var(--text-heading)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Supported in playground</p>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>
+                <code>say</code>, variables (<code>is</code>), arithmetic (+, -, *, /, %),
+                comparisons, <code>check if</code> / <code>otherwise</code>,
+                <code>for each</code> loops, functions (<code>give</code>), lists,
+                <code>filter</code>, <code>map</code>, <code>range</code>
+              </p>
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* Features Info */}
-      <section className="section section-alt">
-        <div className="container">
-          <div className="features-info">
-            <div className="feature-item">
-              <h3>✅ Syntax Highlighting</h3>
-              <p>Full Ezra syntax highlighting in the editor</p>
-            </div>
-            <div className="feature-item">
-              <h3>📝 Code Templates</h3>
-              <p>Start with pre-loaded examples</p>
-            </div>
-            <div className="feature-item">
-              <h3>🎯 Instant Feedback</h3>
-              <p>See results immediately (coming soon)</p>
-            </div>
-            <div className="feature-item">
-              <h3>💾 Save & Share</h3>
-              <p>Save your code snippets and share with others</p>
+            <div style={{ background: 'var(--brand-light)', border: '1px solid var(--brand-border)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem' }}>
+              <p style={{ fontWeight: 700, color: 'var(--brand)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Want full Ezra?</p>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-body)', margin: '0 0 0.75rem' }}>
+                The playground runs a browser simulation. Download the real Ezra runtime for file I/O, error handling, JSON, and more.
+              </p>
+              <a href="/download" className="btn btn-primary btn-sm">Download Ezra</a>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Offline Note */}
-      <section className="section">
-        <div className="container">
-          <div className="alert alert-info">
-            <strong>Note:</strong> The online playground currently provides syntax
-            highlighting and code editing. For full execution, please{' '}
-            <a href="/download">download Ezra</a> and run it locally. Online
-            execution support is coming soon!
-          </div>
-        </div>
-      </section>
-
-      <style jsx>{`
-        .playground-layout {
-          display: grid;
-          gap: 1.5rem;
-        }
-
-        .editor-container {
-          background: var(--color-bg);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-lg);
-          overflow: hidden;
-        }
-
-        .editor-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem 1rem;
-          background: var(--color-bg-secondary);
-          border-bottom: 1px solid var(--color-border);
-          flex-wrap: wrap;
-          gap: 0.5rem;
-        }
-
-        .editor-tabs {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .editor-tab {
-          padding: 0.25rem 0.75rem;
-          background: transparent;
-          border: none;
-          font-size: 0.875rem;
-          color: var(--color-text-muted);
-          cursor: pointer;
-        }
-
-        .editor-tab.active {
-          color: var(--color-text);
-        }
-
-        .editor-actions {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .example-dropdown {
-          position: relative;
-        }
-
-        .example-menu {
-          display: none;
-          position: absolute;
-          top: 100%;
-          left: 0;
-          background: var(--color-bg);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-md);
-          min-width: 150px;
-          z-index: 100;
-          box-shadow: var(--shadow-lg);
-        }
-
-        .example-dropdown:hover .example-menu {
-          display: block;
-        }
-
-        .example-item {
-          display: block;
-          width: 100%;
-          padding: 0.5rem 1rem;
-          background: none;
-          border: none;
-          text-align: left;
-          cursor: pointer;
-          font-size: 0.875rem;
-          color: var(--color-text);
-          transition: background var(--transition-fast);
-        }
-
-        .example-item:hover {
-          background: var(--color-bg-secondary);
-        }
-
-        .editor-wrapper {
-          height: 400px;
-        }
-
-        .editor-wrapper :global(.monaco-editor) {
-          border-radius: 0 !important;
-        }
-
-        .run-button-container {
-          padding: 1rem;
-          text-align: center;
-          border-top: 1px solid var(--color-border);
-        }
-
-        .btn-run {
-          font-size: 1.1rem;
-          padding: 0.75rem 2rem;
-        }
-
-        .output-container {
-          background: var(--color-bg);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-lg);
-        }
-
-        .output-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem 1rem;
-          background: var(--color-bg-secondary);
-          border-bottom: 1px solid var(--color-border);
-        }
-
-        .clear-btn {
-          background: none;
-          border: none;
-          color: var(--color-text-muted);
-          cursor: pointer;
-          font-size: 0.875rem;
-        }
-
-        .clear-btn:hover {
-          color: var(--color-primary);
-        }
-
-        .output-content {
-          height: 200px;
-          overflow-y: auto;
-          padding: 1rem;
-          font-family: var(--font-mono);
-          font-size: 0.875rem;
-          background: var(--color-code-bg);
-          border-radius: 0 0 var(--radius-md) var(--radius-md);
-        }
-
-        .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          color: var(--color-text-muted);
-        }
-
-        .empty-state .muted {
-          font-size: 0.8rem;
-          margin-top: 0.25rem;
-        }
-
-        .console-line {
-          padding: 0.25rem 0;
-          border-bottom: 1px solid transparent;
-          border-bottom-color: rgba(0, 0, 0, 0.05);
-          white-space: pre-wrap;
-          word-break: break-all;
-        }
-
-        .console-line.console-info {
-          color: var(--color-info);
-        }
-
-        .console-line.console-warning {
-          color: var(--color-warning);
-        }
-
-        .console-line.console-error {
-          color: var(--color-error);
-        }
-
-        .timestamp {
-          color: var(--color-text-muted);
-          margin-right: 0.75rem;
-          font-size: 0.75rem;
-        }
-
-        .message {
-          font-size: 0.875rem;
-        }
-
-        .features-info {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 1.5rem;
-          text-align: center;
-        }
-
-        .feature-item h3 {
-          margin-bottom: 0.5rem;
-        }
-
-        .feature-item p {
-          color: var(--color-text-secondary);
-          font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-          .editor-header {
-            flex-direction: column;
-            align-items: stretch;
-          }
-
-          .editor-actions {
-            justify-content: flex-end;
-          }
-
-          .output-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-          }
-        }
-      `}</style>
     </>
   );
 }

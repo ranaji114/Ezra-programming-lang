@@ -1,163 +1,116 @@
 ﻿'use client';
-
 import Link from 'next/link';
 
+const STATS = [
+  { value: 'v1.0.0', label: 'Current Version' },
+  { value: 'Rust', label: 'Built With' },
+  { value: 'MIT', label: 'License' },
+  { value: '55/55', label: 'Tests Passing' },
+];
+
+const TIMELINE = [
+  { date: '2024', title: 'Concept & Design', desc: 'Ezra started as an idea — a scripting language that reads like English, powered by Rust.' },
+  { date: 'Early 2025', title: 'First Working Build', desc: 'Core parser, interpreter, and basic standard library complete. Variables, functions, and control flow working.' },
+  { date: 'Mid 2025', title: 'Standard Library Expansion', desc: 'Math, collections, string manipulation, I/O, and JSON support added. Test suite reaches 55 tests.' },
+  { date: 'Late 2025', title: 'IDE Tools', desc: 'VS Code extension published. Vim support added. REPL polished. Formatter and linter included.' },
+  { date: 'July 2026', title: 'v1.0.0 Released', desc: 'Public release. Cross-platform binaries for Windows, Linux, macOS. Full documentation.' },
+];
+
+const COMPARE = [
+  { feature: 'Readable syntax', ezra: '✅', python: '✅', js: '⚠' },
+  { feature: 'No braces / semicolons', ezra: '✅', python: '✅', js: '❌' },
+  { feature: 'Rust-powered runtime', ezra: '✅', python: '❌', js: '❌' },
+  { feature: 'Cross-platform', ezra: '✅', python: '✅', js: '✅' },
+  { feature: 'Built-in formatter', ezra: '✅', python: '⚠', js: '❌' },
+  { feature: 'VS Code extension', ezra: '✅', python: '✅', js: '✅' },
+  { feature: 'Easy to embed', ezra: '✅', python: '⚠', js: '⚠' },
+  { feature: 'MIT licensed', ezra: '✅', python: '✅', js: '✅' },
+];
+
 export default function AboutPage() {
-  const timeline = [
-    {
-      date: '2024',
-      title: 'Concept & Design',
-      description: 'Started designing Ezra with a focus on readability and simplicity',
-    },
-    {
-      date: 'Early 2025',
-      title: 'First Implementation',
-      description: 'Built the first working prototype in Rust',
-    },
-    {
-      date: 'Mid 2025',
-      title: 'Standard Library',
-      description: 'Developed comprehensive standard library with common utilities',
-    },
-    {
-      date: 'Late 2025',
-      title: 'IDE Integration',
-      description: 'Created VS Code extension and Vim support',
-    },
-    {
-      date: 'July 2026',
-      title: 'Public Release v1.0.0',
-      description: 'Launched Ezra to the public with full documentation',
-    },
-  ];
-
-  const designPrinciples = [
-    {
-      title: 'Readability First',
-      description: 'Code should be easy to read and understand at a glance',
-      example: 'Natural language-like syntax',
-    },
-    {
-      title: 'Simplicity',
-      description: 'Keep the language simple and intuitive',
-      example: 'Minimal boilerplate code',
-    },
-    {
-      title: 'Performance',
-      description: 'Leverage Rust for speed and safety',
-      example: 'Compiled to efficient native code',
-    },
-    {
-      title: 'Practicality',
-      description: 'Solve real-world problems efficiently',
-      example: 'Built-in JSON, file I/O, and more',
-    },
-  ];
-
-  const contributors = [
-    {
-      name: 'Ankur Rana',
-      role: 'Creator & Lead Developer',
-      github: 'ranaji114',
-      description: 'Main architect and primary developer of Ezra',
-    },
-  ];
-
-  const comparison = [
-    {
-      feature: 'Syntax Readability',
-      ezra: '✅ Natural, English-like',
-      python: '✅ Good',
-      javascript: '⚠️ Can be verbose',
-    },
-    {
-      feature: 'Performance',
-      ezra: '✅ Rust-based, very fast',
-      python: '⚠️ Interpreted, slower',
-      javascript: '✅ JIT compiled, fast',
-    },
-    {
-      feature: 'Learning Curve',
-      ezra: '✅ Designed for beginners',
-      python: '✅ Beginner friendly',
-      javascript: '⚠️ Steeper curve',
-    },
-    {
-      feature: 'Memory Safety',
-      ezra: '✅ Rust guarantees',
-      python: '⚠️ GC-based',
-      javascript: '⚠️ GC-based',
-    },
-    {
-      feature: 'Concurrency',
-      ezra: '🟡 Planned',
-      python: '⚠️ GIL limited',
-      javascript: '✅ Async/await',
-    },
-  ];
-
   return (
     <>
+      {/* Hero */}
+      <section className="page-hero">
+        <div className="container">
+          <p className="page-hero-tag">About</p>
+          <h1>About Ezra</h1>
+          <p>The story behind the language, the creator, and the design decisions that shaped it.</p>
+        </div>
+      </section>
+
+      {/* Author */}
       <section className="section">
         <div className="container">
-          <div className="section-header">
-            <h1>About Ezra</h1>
-            <p>
-              Ezra is a modern scripting language designed for readability,
-              simplicity, and performance.
-            </p>
+          <div className="section-heading">
+            <span className="section-tag">Creator</span>
+            <h2>Meet the person behind Ezra</h2>
           </div>
-
-          {/* Introduction */}
-          <div className="intro-section">
-            <div className="intro-content">
-              <p className="lead">
-                Ezra was created with one simple goal: to make programming more
-                accessible and enjoyable. Built on the foundation of Rust, Ezra
-                combines the safety and performance of a systems language with the
-                ease of use of a scripting language.
-              </p>
-              <p>
-                Whether you\'re a seasoned developer or just starting your coding
-                journey, Ezra provides a clean, intuitive syntax that lets you focus
-                on solving problems rather than wrestling with language
-                complexities.
-              </p>
-            </div>
-            <div className="intro-stats">
-              <div className="stat">
-                <div className="stat-value">1.0.0</div>
-                <div className="stat-label">Current Version</div>
-              </div>
-              <div className="stat">
-                <div className="stat-value">Rust</div>
-                <div className="stat-label">Built With</div>
-              </div>
-              <div className="stat">
-                <div className="stat-value">MIT</div>
-                <div className="stat-label">License</div>
-              </div>
-            </div>
+          <div className="author-card">
+            <div className="author-avatar">AR</div>
+            <div className="author-name">Ankur Rana</div>
+            <div className="author-role">Creator &amp; Lead Developer</div>
+            <p className="author-bio">
+              Ankur Rana is the sole creator of Ezra, building the entire language, runtime,
+              tooling, and documentation from scratch. Every line of the parser, interpreter,
+              standard library, and VS Code extension was written by one person with a vision
+              for what a readable scripting language could be.
+            </p>
+            <a
+              href="https://github.com/ranaji114"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              @ranaji114 on GitHub
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Design Philosophy */}
+      {/* Story */}
       <section className="section section-alt">
-        <div className="container">
-          <div className="section-header">
-            <h2>Design Philosophy</h2>
-            <p>What makes Ezra different</p>
+        <div className="container" style={{ maxWidth: '780px', margin: '0 auto' }}>
+          <div className="section-heading" style={{ textAlign: 'left' }}>
+            <span className="section-tag">Origin</span>
+            <h2>Why Ezra was created</h2>
           </div>
+          <p style={{ fontSize: '1.0625rem', lineHeight: '1.8', color: 'var(--text-body)', marginBottom: '1.25rem' }}>
+            Ezra was born out of a simple frustration: existing scripting languages either have
+            too much syntax noise or too little performance. Python is readable but slow to start
+            and deploy. JavaScript is everywhere but the syntax can be confusing for beginners
+            and the tooling fragmented.
+          </p>
+          <p style={{ fontSize: '1.0625rem', lineHeight: '1.8', color: 'var(--text-body)', marginBottom: '1.25rem' }}>
+            Ezra sets out to answer the question: <em>what if you could write scripts that look like
+            you wrote them in English, but ran on something fast?</em> The Rust runtime means fast
+            startup and low memory. The syntax — with keywords like <code>give</code>, <code>is</code>,
+            <code>say</code>, <code>check if</code> — means code you can read back to someone who has
+            never programmed before and they will mostly understand it.
+          </p>
+          <p style={{ fontSize: '1.0625rem', lineHeight: '1.8', color: 'var(--text-body)' }}>
+            The language is intentionally simple. Ezra does not try to replace large-scale systems
+            languages. It is for scripts, automation, learning, and anywhere you want code to be
+            approachable and fast to write.
+          </p>
+        </div>
+      </section>
 
-          <div className="principles-grid">
-            {designPrinciples.map((principle, index) => (
-              <div key={index} className="card principle-card">
-                <h3>{principle.title}</h3>
-                <p>{principle.description}</p>
-                <div className="principle-example">
-                  <code>{principle.example}</code>
-                </div>
+      {/* Stats */}
+      <section className="section">
+        <div className="container">
+          <div className="section-heading">
+            <span className="section-tag">By the Numbers</span>
+            <h2>Ezra at a glance</h2>
+          </div>
+          <div className="stats-grid">
+            {STATS.map(s => (
+              <div key={s.label} className="stat-item">
+                <span className="stat-value">{s.value}</span>
+                <span className="stat-label">{s.label}</span>
               </div>
             ))}
           </div>
@@ -165,56 +118,22 @@ export default function AboutPage() {
       </section>
 
       {/* Timeline */}
-      <section className="section">
-        <div className="container">
-          <div className="section-header">
-            <h2>Project Timeline</h2>
-            <p>The journey of Ezra from concept to reality</p>
-          </div>
-
-          <div className="timeline">
-            {timeline.map((event, index) => (
-              <div key={index} className="timeline-event">
-                <div className="timeline-date">{event.date}</div>
-                <div className="timeline-content">
-                  <h3>{event.title}</h3>
-                  <p>{event.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team */}
       <section className="section section-alt">
         <div className="container">
-          <div className="section-header">
-            <h2>The Team</h2>
-            <p>Meet the people behind Ezra</p>
+          <div className="section-heading">
+            <span className="section-tag">History</span>
+            <h2>How Ezra got here</h2>
           </div>
-
-          <div className="contributors-grid">
-            {contributors.map((contributor, index) => (
-              <div key={index} className="card contributor-card">
-                <div className="contributor-avatar">
-                  {contributor.name.split(' ').map(n => n[0]).join('')}
+          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <div className="timeline">
+              {TIMELINE.map(item => (
+                <div key={item.date} className="timeline-item">
+                  <div className="timeline-date">{item.date}</div>
+                  <div className="timeline-title">{item.title}</div>
+                  <div className="timeline-desc">{item.desc}</div>
                 </div>
-                <h3>{contributor.name}</h3>
-                <p className="role">{contributor.role}</p>
-                <p>{contributor.description}</p>
-                <div className="contributor-links">
-                  <a
-                    href={`https://github.com/${contributor.github}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-outline"
-                  >
-                    GitHub
-                  </a>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -222,393 +141,52 @@ export default function AboutPage() {
       {/* Comparison */}
       <section className="section">
         <div className="container">
-          <div className="section-header">
-            <h2>How Ezra Compares</h2>
-            <p>
-              See how Ezra stacks up against other popular languages
-            </p>
+          <div className="section-heading">
+            <span className="section-tag">Comparison</span>
+            <h2>Ezra vs other languages</h2>
+            <p>How Ezra stacks up on key design criteria.</p>
           </div>
-
-          <div className="comparison-table-container">
-            <table className="comparison-table">
+          <div style={{ overflowX: 'auto' }}>
+            <table className="compare-table">
               <thead>
                 <tr>
-                  <th>Feature</th>
+                  <th style={{ textAlign: 'left' }}>Feature</th>
                   <th>Ezra</th>
                   <th>Python</th>
                   <th>JavaScript</th>
                 </tr>
               </thead>
               <tbody>
-                {comparison.map((row, index) => (
-                  <tr key={index}>
+                {COMPARE.map(row => (
+                  <tr key={row.feature}>
                     <td>{row.feature}</td>
                     <td>{row.ezra}</td>
                     <td>{row.python}</td>
-                    <td>{row.javascript}</td>
+                    <td>{row.js}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          <div className="alert alert-info" style={{ marginTop: '2rem' }}>
-            <p>
-              <strong>Note:</strong> Ezra is a new language and is still evolving.
-              Some features may not be available yet, but we\'re actively working on
-              expanding Ezra\'s capabilities.
-            </p>
-          </div>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '1rem' }}>
+            ✅ Yes &nbsp;⚠ Partial &nbsp;❌ No
+          </p>
         </div>
       </section>
 
-      {/* Why Ezra */}
+      {/* CTA */}
       <section className="section section-alt">
-        <div className="container">
-          <div className="section-header">
-            <h2>Why Choose Ezra?</h2>
-            <p>Reasons to use Ezra for your next project</p>
-          </div>
-
-          <div className="why-grid">
-            <div className="card why-card">
-              <h3>🎯 Perfect for Beginners</h3>
-              <p>
-                Ezra\'s clean syntax was designed with newcomers in mind. If
-                you\'re learning to code, Ezra helps you focus on concepts rather
-                than language quirks.
-              </p>
-            </div>
-            <div className="card why-card">
-              <h3>⚡ Built for Performance</h3>
-              <p>
-                Thanks to Rust, Ezra offers excellent performance while maintaining
-                memory safety. You get the best of both worlds.
-              </p>
-            </div>
-            <div className="card why-card">
-              <h3>📦 Batteries Included</h3>
-              <p>
-                Ezra comes with a comprehensive standard library that includes
-                everything from JSON parsing to file I/O.
-              </p>
-            </div>
-            <div className="card why-card">
-              <h3>🔧 Great Tooling</h3>
-              <p>
-                First-class IDE support with VS Code extension, Vim support, and
-                powerful CLI tools for development.
-              </p>
-            </div>
-            <div className="card why-card">
-              <h3>🌍 Cross-Platform</h3>
-              <p>
-                Ezra works on Windows, Linux, and macOS. Write once, run anywhere.
-              </p>
-            </div>
-            <div className="card why-card">
-              <h3>📚 Well Documented</h3>
-              <p>
-                Comprehensive documentation with tutorials, examples, and detailed
-                reference guides.
-              </p>
-            </div>
+        <div className="container" style={{ textAlign: 'center' }}>
+          <h2 style={{ marginBottom: '0.75rem' }}>Ready to try Ezra?</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.75rem', fontSize: '1.0625rem' }}>
+            Download for your platform or jump into the browser playground.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/download" className="btn btn-primary btn-lg">Download Ezra</Link>
+            <Link href="/playground" className="btn btn-secondary btn-lg">Try in Browser</Link>
           </div>
         </div>
       </section>
-
-      {/* Get Involved */}
-      <section className="section">
-        <div className="container">
-          <div className="get-involved-card">
-            <h2>Get Involved</h2>
-            <p>
-              Ezra is an open-source project, and we welcome contributions from
-              everyone. Whether you want to report bugs, suggest features, or
-              contribute code, your help is valuable.
-            </p>
-            <div className="involved-actions">
-              <a
-                href="https://github.com/ranaji114/Ezra-programming-lang"
-                className="btn btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View on GitHub
-              </a>
-              <Link href="/community" className="btn btn-outline">
-                Join the Community
-              </Link>
-              <Link href="/docs" className="btn btn-secondary">
-                Read the Docs
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <style jsx>{`
-        .lead {
-          font-size: 1.25rem;
-          line-height: 1.6;
-          color: var(--color-text);
-          margin-bottom: 1rem;
-        }
-
-        .intro-section {
-          display: grid;
-          gap: 2rem;
-          align-items: center;
-        }
-
-        .intro-stats {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-          gap: 1.5rem;
-          text-align: center;
-        }
-
-        .stat {
-          padding: 1.5rem;
-          background: var(--color-bg-secondary);
-          border-radius: var(--radius-lg);
-        }
-
-        .stat-value {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: var(--color-primary);
-        }
-
-        .stat-label {
-          color: var(--color-text-muted);
-          font-size: 0.875rem;
-        }
-
-        .principles-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .principle-card {
-          text-align: center;
-        }
-
-        .principle-card h3 {
-          margin-bottom: 0.5rem;
-        }
-
-        .principle-card p {
-          color: var(--color-text-secondary);
-          margin-bottom: 1rem;
-        }
-
-        .principle-example {
-          padding: 0.75rem;
-          background: var(--color-code-bg);
-          border-radius: var(--radius-md);
-        }
-
-        .principle-example code {
-          background: transparent;
-          padding: 0;
-          border: none;
-        }
-
-        .timeline {
-          position: relative;
-          padding-left: 2rem;
-        }
-
-        .timeline::before {
-          content: '';
-          position: absolute;
-          left: 0.75rem;
-          top: 0;
-          bottom: 0;
-          width: 2px;
-          background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
-        }
-
-        .timeline-event {
-          position: relative;
-          padding-bottom: 2rem;
-        }
-
-        .timeline-event::before {
-          content: '';
-          position: absolute;
-          left: -2rem;
-          top: 0.25rem;
-          width: 16px;
-          height: 16px;
-          background: var(--color-primary);
-          border-radius: 50%;
-          border: 2px solid var(--color-bg);
-        }
-
-        .timeline-date {
-          display: inline-block;
-          padding: 0.25rem 0.75rem;
-          background: var(--color-primary-light);
-          color: white;
-          border-radius: var(--radius-sm);
-          font-size: 0.875rem;
-          font-weight: 600;
-          margin-bottom: 0.5rem;
-        }
-
-        .timeline-content {
-          background: var(--color-bg);
-          padding: 1rem;
-          border-radius: var(--radius-md);
-          border: 1px solid var(--color-border);
-          margin-left: 1rem;
-        }
-
-        .timeline-content h3 {
-          margin-bottom: 0.5rem;
-        }
-
-        .timeline-content p {
-          color: var(--color-text-secondary);
-          margin: 0;
-        }
-
-        .contributors-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .contributor-card {
-          text-align: center;
-        }
-
-        .contributor-avatar {
-          width: 64px;
-          height: 64px;
-          background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: 700;
-          font-size: 1.5rem;
-          margin: 0 auto 1rem;
-        }
-
-        .contributor-card h3 {
-          margin-bottom: 0.25rem;
-        }
-
-        .role {
-          color: var(--color-text-muted);
-          font-size: 0.9rem;
-          margin-bottom: 0.5rem;
-        }
-
-        .contributor-links {
-          margin-top: 1rem;
-        }
-
-        .comparison-table-container {
-          overflow-x: auto;
-        }
-
-        .comparison-table {
-          width: 100%;
-          min-width: 600px;
-        }
-
-        .comparison-table th,
-        .comparison-table td {
-          padding: 1rem;
-          text-align: center;
-        }
-
-        .comparison-table th {
-          background: var(--color-bg-secondary);
-        }
-
-        .why-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .why-card {
-          text-align: center;
-        }
-
-        .why-card h3 {
-          margin-bottom: 0.5rem;
-        }
-
-        .why-card p {
-          color: var(--color-text-secondary);
-        }
-
-        .get-involved-card {
-          text-align: center;
-          padding: 2rem;
-          background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg) 100%);
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--color-border);
-        }
-
-        .get-involved-card h2 {
-          margin-bottom: 1rem;
-        }
-
-        .get-involved-card p {
-          color: var(--color-text-secondary);
-          max-width: 600px;
-          margin: 0 auto 1.5rem;
-        }
-
-        .involved-actions {
-          display: flex;
-          gap: 1rem;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        @media (max-width: 768px) {
-          .intro-section {
-            grid-template-columns: 1fr;
-          }
-
-          .intro-stats {
-            grid-template-columns: 1fr;
-          }
-
-          .timeline::before {
-            left: 0.25rem;
-          }
-
-          .timeline-event::before {
-            left: -1.25rem;
-          }
-
-          .timeline-content {
-            margin-left: 0.5rem;
-          }
-
-          .contributors-grid,
-          .principles-grid,
-          .why-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .involved-actions {
-            flex-direction: column;
-            align-items: center;
-          }
-        }
-      `}</style>
     </>
   );
 }
