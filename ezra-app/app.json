@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Ezra Language",
+    "slug": "ezra-lang",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ankurrana.ezralang"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.ankurrana.ezralang"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "description": "Learn Ezra programming language - by Ankur Rana",
+    "githubUrl": "https://github.com/ranaji114/Ezra-programming-lang"
+  }
+}
