@@ -9,3 +9,9 @@ vscode-extension/flux/*.vsix
 # Local build artifacts (generated — not tracked)
 SHA256SUMS
 test_ezra_dir/
+
+# Ezra app — exclude node_modules but track source files
+ezra-app/node_modules/
+ezra-app/.expo/
+ezra-app/dist/
+ezra-app/web-build/
